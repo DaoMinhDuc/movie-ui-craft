@@ -42,6 +42,7 @@ const MovieSection: React.FC<MovieSectionProps> = ({ title, subtitle, movies }) 
         {movies.map((movie) => (
           <MovieCard
             key={movie.id}
+            id={movie.id}
             title={movie.title}
             subtitle={movie.subtitle}
             image={movie.image}

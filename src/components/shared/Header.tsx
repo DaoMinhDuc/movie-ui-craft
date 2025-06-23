@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Search, User, Menu, Bell } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -10,7 +11,7 @@ const Header = () => {
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center space-x-2">
+          <Link to="/" className="flex items-center space-x-2">
             <div className="w-10 h-10 bg-movie-accent rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">R</span>
             </div>
@@ -18,28 +19,28 @@ const Header = () => {
               <h1 className="text-xl font-bold text-movie-text">RoPhim</h1>
               <p className="text-xs text-movie-muted">Phim hay có đó</p>
             </div>
-          </div>
+          </Link>
 
           {/* Navigation */}
           <nav className="hidden md:flex items-center space-x-6">
-            <a href="#phim-bo" className="text-movie-text hover:text-movie-accent transition-colors">
+            <Link to="/category/phim-bo" className="text-movie-text hover:text-movie-accent transition-colors">
               Phim Bộ
-            </a>
-            <a href="#phim-le" className="text-movie-text hover:text-movie-accent transition-colors">
+            </Link>
+            <Link to="/category/phim-le" className="text-movie-text hover:text-movie-accent transition-colors">
               Phim Lẻ
-            </a>
+            </Link>
             <a href="#xem-chung" className="text-movie-text hover:text-movie-accent transition-colors bg-orange-500 px-2 py-1 rounded text-xs font-medium">
               NEW
             </a>
-            <a href="#quoc-gia" className="text-movie-text hover:text-movie-accent transition-colors">
-              Quốc gia
-            </a>
-            <a href="#dien-vien" className="text-movie-text hover:text-movie-accent transition-colors">
-              Diễn Viên
-            </a>
-            <a href="#lich-chieu" className="text-movie-text hover:text-movie-accent transition-colors">
-              Lịch chiếu
-            </a>
+            <Link to="/category/phim-han" className="text-movie-text hover:text-movie-accent transition-colors">
+              Phim Hàn
+            </Link>
+            <Link to="/category/phim-trung" className="text-movie-text hover:text-movie-accent transition-colors">
+              Phim Trung
+            </Link>
+            <Link to="/category/phim-my" className="text-movie-text hover:text-movie-accent transition-colors">
+              Phim Mỹ
+            </Link>
           </nav>
 
           {/* Search & User */}
