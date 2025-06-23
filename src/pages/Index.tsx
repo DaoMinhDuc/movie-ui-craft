@@ -1,57 +1,28 @@
+
 import React from 'react';
 import Header from '@/components/shared/Header';
 import CategoryGrid from '@/components/shared/CategoryGrid';
 import MovieSection from '@/components/shared/MovieSection';
+import { useNewMovies, useMovieList } from '@/hooks/useMovies';
+import { transformMovieToCardData } from '@/utils/movieUtils';
 
 const Index = () => {
-  // Sample movie data
-  const koreanMovies = [
-    {
-      id: '1',
-      title: 'Tôi Đã Cướp Mất Đêm Đầu Tiên Của Nam Chính',
-      subtitle: 'The First Night with the Duke',
-      image: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=400&h=225&fit=crop',
-      episode: 'PĐ. 1',
-      rating: 8.5,
-      year: '2024',
-      duration: '45 phút',
-      genre: ['Romance', 'Drama'],
-      isNew: true
-    },
-    {
-      id: '2',
-      title: 'Mùa Xuân Tuổi Trẻ',
-      subtitle: 'Spring of Youth',
-      image: 'https://images.unsplash.com/photo-1489844097929-c8d5b91c456e?w=400&h=225&fit=crop',
-      episode: 'PĐ. 7',
-      rating: 9.2,
-      year: '2024',
-      duration: '60 phút',
-      genre: ['Youth', 'Romance']
-    },
-    {
-      id: '3',
-      title: 'Ngôi Nhà của Nữ Hoàng',
-      subtitle: "Queen's House",
-      image: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&h=225&fit=crop',
-      episode: 'PĐ. 31',
-      rating: 8.8,
-      year: '2024',
-      duration: '50 phút',
-      genre: ['Mystery', 'Thriller']
-    },
-    {
-      id: '4',
-      title: 'Họ Đã Kết Hôn',
-      subtitle: 'They Got Married',
-      image: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop',
-      episode: 'Full',
-      rating: 7.9,
-      year: '2023',
-      duration: '120 phút',
-      genre: ['Romance', 'Comedy']
-    }
-  ];
+  // Lấy phim mới cập nhật
+  const { data: newMoviesData, isLoading: isLoadingNew } = useNewMovies(1, 'v2');
+  
+  // Lấy phim bộ Hàn Quốc
+  const { data: koreanSeriesData, isLoading: isLoadingKorean } = useMovieList({
+    type_list: 'phim-bo',
+    country: 'han-quoc',
+    page: 1,
+    limit: 8,
+    sort_field: 'modified.time',
+    sort_type: 'desc'
+  });
+
+  // Transform dữ liệu cho UI
+  const newMovies = newMoviesData?.data?.items?.slice(0, 8)?.map(transformMovieToCardData) || [];
+  const koreanMovies = koreanSeriesData?.data?.items?.map(transformMovieToCardData) || [];
 
   return (
     <div className="min-h-screen bg-movie-bg">
@@ -91,14 +62,31 @@ const Index = () => {
       <CategoryGrid />
 
       {/* Movie Sections */}
-      <MovieSection 
-        title="Phim Hàn Quốc mới"
-        subtitle="Những bộ phim Hàn Quốc hot nhất hiện tại"
-        movies={koreanMovies}
-      />
+      {isLoadingNew ? (
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center text-movie-muted">Đang tải phim mới...</div>
+        </div>
+      ) : (
+        <MovieSection 
+          title="Phim mới cập nhật"
+          subtitle="Những bộ phim được cập nhật gần đây nhất"
+          movies={newMovies}
+        />
+      )}
 
-      {/* Additional sections can be added here */}
-      <div className="h-20" /> {/* Spacer */}
+      {isLoadingKorean ? (
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center text-movie-muted">Đang tải phim Hàn Quốc...</div>
+        </div>
+      ) : (
+        <MovieSection 
+          title="Phim Hàn Quốc mới"
+          subtitle="Những bộ phim Hàn Quốc hot nhất hiện tại"
+          movies={koreanMovies}
+        />
+      )}
+
+      <div className="h-20" />
     </div>
   );
 };
