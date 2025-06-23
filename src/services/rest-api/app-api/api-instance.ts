@@ -1,9 +1,8 @@
 
 import axios from 'axios';
-import { API_CONFIG } from '@/config/env';
 
 const api = axios.create({
-  baseURL: API_CONFIG.BASE_URL,
+  baseURL: 'https://phimapi.com',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

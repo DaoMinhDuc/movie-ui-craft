@@ -3,15 +3,16 @@ import React from 'react';
 import Header from '@/components/shared/Header';
 import CategoryGrid from '@/components/shared/CategoryGrid';
 import MovieSection from '@/components/shared/MovieSection';
-import { useNewMovies, useMovieList } from '@/hooks/useMovies';
+import { useGetNewMovies } from '@/core/movie/hooks/use-get-new-movies';
+import { useGetMovieList } from '@/core/movie/hooks/use-get-movie-list';
 import { transformMovieToCardData } from '@/utils/movieUtils';
 
 const Index = () => {
   // Lấy phim mới cập nhật
-  const { data: newMoviesData, isLoading: isLoadingNew } = useNewMovies(1, 'v2');
+  const { movieList: newMovies, isLoading: isLoadingNew } = useGetNewMovies(1, 'v2');
   
   // Lấy phim bộ Hàn Quốc
-  const { data: koreanSeriesData, isLoading: isLoadingKorean } = useMovieList({
+  const { movieList: koreanMovies, isLoading: isLoadingKorean } = useGetMovieList({
     type_list: 'phim-bo',
     country: 'han-quoc',
     page: 1,
@@ -21,8 +22,8 @@ const Index = () => {
   });
 
   // Transform dữ liệu cho UI
-  const newMovies = newMoviesData?.data?.items?.slice(0, 8)?.map(transformMovieToCardData) || [];
-  const koreanMovies = koreanSeriesData?.data?.items?.map(transformMovieToCardData) || [];
+  const transformedNewMovies = newMovies?.slice(0, 8)?.map(transformMovieToCardData) || [];
+  const transformedKoreanMovies = koreanMovies?.map(transformMovieToCardData) || [];
 
   return (
     <div className="min-h-screen bg-movie-bg">
@@ -70,7 +71,7 @@ const Index = () => {
         <MovieSection 
           title="Phim mới cập nhật"
           subtitle="Những bộ phim được cập nhật gần đây nhất"
-          movies={newMovies}
+          movies={transformedNewMovies}
         />
       )}
 
@@ -82,7 +83,7 @@ const Index = () => {
         <MovieSection 
           title="Phim Hàn Quốc mới"
           subtitle="Những bộ phim Hàn Quốc hot nhất hiện tại"
-          movies={koreanMovies}
+          movies={transformedKoreanMovies}
         />
       )}
 
