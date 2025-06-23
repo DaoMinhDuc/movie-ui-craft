@@ -1,11 +1,37 @@
 
-import React from 'react';
-import { Search, User, Menu, Bell } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Search, User, Menu, Bell, LogOut } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const Header = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery('');
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   return (
     <header className="bg-movie-bg border-b border-movie-card sticky top-0 z-50 backdrop-blur-sm">
       <div className="container mx-auto px-4 py-3">
@@ -45,22 +71,83 @@ const Header = () => {
 
           {/* Search & User */}
           <div className="flex items-center space-x-4">
-            <div className="hidden sm:flex relative">
+            {/* Search */}
+            <form onSubmit={handleSearch} className="hidden sm:flex relative">
               <Input 
                 placeholder="Tìm kiếm phim..." 
-                className="bg-movie-card border-movie-card text-movie-text placeholder:text-movie-muted w-64"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-movie-card border-movie-card text-movie-text placeholder:text-movie-muted w-64 pr-10"
               />
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-movie-muted" />
-            </div>
+              <Button
+                type="submit"
+                size="sm"
+                variant="ghost"
+                className="absolute right-0 top-0 h-full px-3 text-movie-muted hover:text-movie-accent"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+            </form>
             
-            <Button size="icon" variant="ghost" className="text-movie-text hover:text-movie-accent">
-              <Bell className="h-5 w-5" />
-            </Button>
+            {/* Mobile Search */}
+            <Link to="/search" className="sm:hidden">
+              <Button size="icon" variant="ghost" className="text-movie-text hover:text-movie-accent">
+                <Search className="h-5 w-5" />
+              </Button>
+            </Link>
             
-            <Button className="bg-movie-accent hover:bg-movie-accent/90 text-white">
-              <User className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Thành viên</span>
-            </Button>
+            {/* Notifications */}
+            {user && (
+              <Button size="icon" variant="ghost" className="text-movie-text hover:text-movie-accent">
+                <Bell className="h-5 w-5" />
+              </Button>
+            )}
+            
+            {/* User Menu */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarFallback className="bg-movie-accent text-white">
+                        {user.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56 bg-movie-card border-movie-card" align="end" forceMount>
+                  <div className="flex flex-col space-y-1 p-2">
+                    <p className="text-sm font-medium text-movie-text">{user.name}</p>
+                    <p className="text-xs text-movie-muted">{user.email}</p>
+                  </div>
+                  <DropdownMenuSeparator className="bg-movie-card" />
+                  <DropdownMenuItem className="text-movie-text hover:bg-movie-bg">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Hồ sơ</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-movie-text hover:bg-movie-bg">
+                    <Bell className="mr-2 h-4 w-4" />
+                    <span>Thông báo</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-movie-card" />
+                  <DropdownMenuItem 
+                    onClick={handleLogout}
+                    className="text-red-500 hover:bg-movie-bg hover:text-red-400"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Đăng xuất</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link to="/auth">
+                <Button className="bg-movie-accent hover:bg-movie-accent/90 text-white">
+                  <User className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Thành viên</span>
+                </Button>
+              </Link>
+            )}
             
             <Button size="icon" variant="ghost" className="md:hidden text-movie-text">
               <Menu className="h-5 w-5" />
