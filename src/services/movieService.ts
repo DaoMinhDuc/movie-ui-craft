@@ -1,6 +1,6 @@
 
 import api from './api';
-import { API_CONFIG } from '@/config/env';
+import { API_CONFIG } from '@/config/api';
 import type { 
   ApiResponse, 
   PaginatedResponse, 
@@ -10,7 +10,7 @@ import type {
   Country, 
   SearchParams, 
   MovieListParams 
-} from '@/types/api';
+} from '@/types/movie';
 
 export const movieService = {
   // Lấy danh sách phim mới cập nhật

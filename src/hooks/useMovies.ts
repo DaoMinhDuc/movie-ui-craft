@@ -1,82 +1,136 @@
 
-import { useQuery } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { movieService } from '@/services/movieService';
-import { movieKeys } from './queryKeys';
-import type { SearchParams, MovieListParams } from '@/types/api';
+import type { Movie, MovieDetail, Category, Country, SearchParams, MovieListParams } from '@/types/movie';
 
 export const useNewMovies = (page: number = 1, version: 'v1' | 'v2' | 'v3' = 'v1') => {
-  return useQuery({
-    queryKey: movieKeys.newMovies(page, version),
-    queryFn: () => movieService.getNewMovies(page, version),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  const [data, setData] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await movieService.getNewMovies(page, version);
+        setData(response.data.items || []);
+        setError(null);
+      } catch (err) {
+        setError(err as Error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [page, version]);
+
+  return { data, loading, error };
 };
 
 export const useMovieDetail = (slug: string) => {
-  return useQuery({
-    queryKey: movieKeys.detail(slug),
-    queryFn: () => movieService.getMovieDetail(slug),
-    enabled: !!slug,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-  });
+  const [data, setData] = useState<MovieDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!slug) return;
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await movieService.getMovieDetail(slug);
+        setData(response.data.item);
+        setError(null);
+      } catch (err) {
+        setError(err as Error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [slug]);
+
+  return { data, loading, error };
 };
 
 export const useMovieList = (params: MovieListParams) => {
-  return useQuery({
-    queryKey: movieKeys.list(params),
-    queryFn: () => movieService.getMovieList(params),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  const [data, setData] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await movieService.getMovieList(params);
+        setData(response.data.items || []);
+        setError(null);
+      } catch (err) {
+        setError(err as Error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [JSON.stringify(params)]);
+
+  return { data, loading, error };
 };
 
 export const useSearchMovies = (params: SearchParams) => {
-  return useQuery({
-    queryKey: movieKeys.search(params),
-    queryFn: () => movieService.searchMovies(params),
-    enabled: !!params.keyword,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-  });
+  const [data, setData] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    if (!params.keyword) {
+      setData([]);
+      return;
+    }
+
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await movieService.searchMovies(params);
+        setData(response.data.items || []);
+        setError(null);
+      } catch (err) {
+        setError(err as Error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [JSON.stringify(params)]);
+
+  return { data, loading, error };
 };
 
 export const useCategories = () => {
-  return useQuery({
-    queryKey: movieKeys.categories(),
-    queryFn: () => movieService.getCategories(),
-    staleTime: 30 * 60 * 1000, // 30 minutes
-  });
-};
+  const [data, setData] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-export const useMoviesByCategory = (categorySlug: string, params: Omit<SearchParams, 'keyword'> = {}) => {
-  return useQuery({
-    queryKey: movieKeys.categoryMovies(categorySlug, params),
-    queryFn: () => movieService.getMoviesByCategory(categorySlug, params),
-    enabled: !!categorySlug,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-};
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await movieService.getCategories();
+        setData(response.data || []);
+        setError(null);
+      } catch (err) {
+        setError(err as Error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-export const useCountries = () => {
-  return useQuery({
-    queryKey: movieKeys.countries(),
-    queryFn: () => movieService.getCountries(),
-    staleTime: 30 * 60 * 1000, // 30 minutes
-  });
-};
+    fetchData();
+  }, []);
 
-export const useMoviesByCountry = (countrySlug: string, params: Omit<SearchParams, 'keyword'> = {}) => {
-  return useQuery({
-    queryKey: movieKeys.countryMovies(countrySlug, params),
-    queryFn: () => movieService.getMoviesByCountry(countrySlug, params),
-    enabled: !!countrySlug,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-};
-
-export const useMoviesByYear = (year: number, params: Omit<SearchParams, 'keyword' | 'year'> = {}) => {
-  return useQuery({
-    queryKey: movieKeys.yearMovies(year, params),
-    queryFn: () => movieService.getMoviesByYear(year, params),
-    enabled: !!year,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
+  return { data, loading, error };
 };

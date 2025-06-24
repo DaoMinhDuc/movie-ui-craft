@@ -6,95 +6,25 @@ import MovieCard from '@/components/shared/MovieCard';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { useSearchMovies } from '@/hooks/useMovies';
+import { transformMovieToCardData } from '@/utils/movieUtils';
 
 const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
 
-  // Sample movie data for search results
-  const allMovies = [
-    {
-      id: '1',
-      title: 'Tôi Đã Cướp Mất Đêm Đầu Tiên Của Nam Chính',
-      subtitle: 'The First Night with the Duke',
-      image: 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=400&h=225&fit=crop',
-      episode: 'PĐ. 1',
-      rating: 8.5,
-      year: '2024',
-      duration: '45 phút',
-      genre: ['Romance', 'Drama'],
-      isNew: true
-    },
-    {
-      id: '2',
-      title: 'Mùa Xuân Tuổi Trẻ',
-      subtitle: 'Spring of Youth',
-      image: 'https://images.unsplash.com/photo-1489844097929-c8d5b91c456e?w=400&h=225&fit=crop',
-      episode: 'PĐ. 7',
-      rating: 9.2,
-      year: '2024',
-      duration: '60 phút',
-      genre: ['Youth', 'Romance']
-    },
-    {
-      id: '3',
-      title: 'Ngôi Nhà của Nữ Hoàng',
-      subtitle: "Queen's House",
-      image: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&h=225&fit=crop',
-      episode: 'PĐ. 31',
-      rating: 8.8,
-      year: '2024',
-      duration: '50 phút',
-      genre: ['Mystery', 'Thriller']
-    },
-    {
-      id: '4',
-      title: 'Họ Đã Kết Hôn',
-      subtitle: 'They Got Married',
-      image: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=400&h=225&fit=crop',
-      episode: 'Full',
-      rating: 7.9,
-      year: '2023',
-      duration: '120 phút',
-      genre: ['Romance', 'Comedy']
-    },
-    {
-      id: '5',
-      title: 'Avengers: Endgame',
-      subtitle: 'Marvel Studios',
-      image: 'https://images.unsplash.com/photo-1478720568477-b0a8b0df2bdb?w=400&h=225&fit=crop',
-      episode: 'Full',
-      rating: 9.0,
-      year: '2019',
-      duration: '181 phút',
-      genre: ['Action', 'Adventure', 'Drama']
-    }
-  ];
+  const { data: searchResults, loading: isLoading } = useSearchMovies({
+    keyword: searchQuery,
+    page: 1,
+    limit: 20
+  });
 
   useEffect(() => {
     const query = searchParams.get('q');
     if (query) {
       setSearchQuery(query);
-      handleSearch(query);
     }
   }, [searchParams]);
-
-  const handleSearch = (query: string) => {
-    setIsLoading(true);
-    
-    // Simulate API call delay
-    setTimeout(() => {
-      const results = allMovies.filter(movie => 
-        movie.title.toLowerCase().includes(query.toLowerCase()) ||
-        movie.subtitle?.toLowerCase().includes(query.toLowerCase()) ||
-        movie.genre.some(g => g.toLowerCase().includes(query.toLowerCase()))
-      );
-      setSearchResults(results);
-      setIsLoading(false);
-    }, 500);
-  };
 
   const onSearch = () => {
     if (searchQuery.trim()) {
@@ -107,6 +37,8 @@ const SearchPage = () => {
       onSearch();
     }
   };
+
+  const transformedResults = searchResults.map(transformMovieToCardData);
 
   return (
     <div className="min-h-screen bg-movie-bg">
@@ -145,7 +77,7 @@ const SearchPage = () => {
                 {isLoading ? (
                   'Đang tìm kiếm...'
                 ) : (
-                  `Kết quả cho "${searchQuery}" (${searchResults.length} phim)`
+                  `Kết quả cho "${searchQuery}" (${transformedResults.length} phim)`
                 )}
               </h2>
             </div>
@@ -158,9 +90,9 @@ const SearchPage = () => {
               </div>
             ) : (
               <>
-                {searchResults.length > 0 ? (
+                {transformedResults.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {searchResults.map((movie) => (
+                    {transformedResults.map((movie) => (
                       <MovieCard
                         key={movie.id}
                         id={movie.id}

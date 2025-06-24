@@ -8,10 +8,10 @@ import { transformMovieToCardData } from '@/utils/movieUtils';
 
 const Index = () => {
   // Lấy phim mới cập nhật
-  const { data: newMoviesData, isLoading: isLoadingNew } = useNewMovies(1, 'v2');
+  const { data: newMoviesData, loading: isLoadingNew } = useNewMovies(1, 'v2');
   
   // Lấy phim bộ Hàn Quốc
-  const { data: koreanSeriesData, isLoading: isLoadingKorean } = useMovieList({
+  const { data: koreanSeriesData, loading: isLoadingKorean } = useMovieList({
     type_list: 'phim-bo',
     country: 'han-quoc',
     page: 1,
@@ -21,8 +21,8 @@ const Index = () => {
   });
 
   // Transform dữ liệu cho UI
-  const newMovies = newMoviesData?.data?.items?.slice(0, 8)?.map(transformMovieToCardData) || [];
-  const koreanMovies = koreanSeriesData?.data?.items?.map(transformMovieToCardData) || [];
+  const newMovies = newMoviesData?.slice(0, 8)?.map(transformMovieToCardData) || [];
+  const koreanMovies = koreanSeriesData?.map(transformMovieToCardData) || [];
 
   return (
     <div className="min-h-screen bg-movie-bg">
