@@ -8,12 +8,20 @@ import { transformMovieToCardData } from '@/utils/movieUtils';
 
 const Index = () => {
   // Lấy phim mới cập nhật
-  const { data: newMoviesData, loading: isLoadingNew } = useNewMovies(1, 'v2');
+  const { data: newMoviesData, loading: isLoadingNew, error: errorNew } = useNewMovies(1, 'v2');
   
-  // Lấy phim bộ Hàn Quốc
-  const { data: koreanSeriesData, loading: isLoadingKorean } = useMovieList({
+  // Lấy phim bộ mới nhất
+  const { data: seriesData, loading: isLoadingSeries, error: errorSeries } = useMovieList({
     type_list: 'phim-bo',
-    country: 'han-quoc',
+    page: 1,
+    limit: 8,
+    sort_field: 'modified.time',
+    sort_type: 'desc'
+  });
+
+  // Lấy phim lẻ mới nhất
+  const { data: moviesData, loading: isLoadingMovies, error: errorMovies } = useMovieList({
+    type_list: 'phim-le',
     page: 1,
     limit: 8,
     sort_field: 'modified.time',
@@ -22,7 +30,10 @@ const Index = () => {
 
   // Transform dữ liệu cho UI
   const newMovies = newMoviesData?.slice(0, 8)?.map(transformMovieToCardData) || [];
-  const koreanMovies = koreanSeriesData?.map(transformMovieToCardData) || [];
+  const series = seriesData?.map(transformMovieToCardData) || [];
+  const movies = moviesData?.map(transformMovieToCardData) || [];
+
+  console.log('API Data:', { newMoviesData, seriesData, moviesData });
 
   return (
     <div className="min-h-screen bg-movie-bg">
@@ -66,24 +77,60 @@ const Index = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="text-center text-movie-muted">Đang tải phim mới...</div>
         </div>
-      ) : (
+      ) : errorNew ? (
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center text-red-500">Lỗi tải phim mới: {errorNew.message}</div>
+        </div>
+      ) : newMovies.length > 0 ? (
         <MovieSection 
           title="Phim mới cập nhật"
           subtitle="Những bộ phim được cập nhật gần đây nhất"
           movies={newMovies}
         />
+      ) : (
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center text-movie-muted">Không có phim mới nào</div>
+        </div>
       )}
 
-      {isLoadingKorean ? (
+      {isLoadingSeries ? (
         <div className="container mx-auto px-4 py-8">
-          <div className="text-center text-movie-muted">Đang tải phim Hàn Quốc...</div>
+          <div className="text-center text-movie-muted">Đang tải phim bộ...</div>
         </div>
-      ) : (
+      ) : errorSeries ? (
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center text-red-500">Lỗi tải phim bộ: {errorSeries.message}</div>
+        </div>
+      ) : series.length > 0 ? (
         <MovieSection 
-          title="Phim Hàn Quốc mới"
-          subtitle="Những bộ phim Hàn Quốc hot nhất hiện tại"
-          movies={koreanMovies}
+          title="Phim bộ mới nhất"
+          subtitle="Những bộ phim bộ hot nhất hiện tại"
+          movies={series}
         />
+      ) : (
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center text-movie-muted">Không có phim bộ nào</div>
+        </div>
+      )}
+
+      {isLoadingMovies ? (
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center text-movie-muted">Đang tải phim lẻ...</div>
+        </div>
+      ) : errorMovies ? (
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center text-red-500">Lỗi tải phim lẻ: {errorMovies.message}</div>
+        </div>
+      ) : movies.length > 0 ? (
+        <MovieSection 
+          title="Phim lẻ mới nhất"
+          subtitle="Những bộ phim lẻ được yêu thích nhất"
+          movies={movies}
+        />
+      ) : (
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center text-movie-muted">Không có phim lẻ nào</div>
+        </div>
       )}
 
       <div className="h-20" />

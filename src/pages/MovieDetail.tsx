@@ -7,11 +7,11 @@ import { Badge } from '@/components/ui/badge';
 import Header from '@/components/shared/Header';
 import MovieSection from '@/components/shared/MovieSection';
 import { useMovieDetail, useMovieList } from '@/hooks/useMovies';
-import { transformMovieToCardData } from '@/utils/movieUtils';
+import { transformMovieToCardData, getMovieImageUrl } from '@/utils/movieUtils';
 
 const MovieDetail = () => {
-  const { slug } = useParams();
-  const { data: movie, loading } = useMovieDetail(slug || '');
+  const { id } = useParams();
+  const { data: movie, loading } = useMovieDetail(id || '');
   
   // Lấy phim liên quan (cùng thể loại)
   const { data: relatedMoviesData } = useMovieList({
@@ -45,6 +45,9 @@ const MovieDetail = () => {
     );
   }
 
+  const posterUrl = getMovieImageUrl(movie);
+  const heroImageUrl = movie.thumb_url ? `https://phimimg.com/${movie.thumb_url}` : posterUrl;
+
   return (
     <div className="min-h-screen bg-movie-bg">
       <Header />
@@ -61,7 +64,7 @@ const MovieDetail = () => {
       <section className="relative">
         <div 
           className="h-[50vh] bg-cover bg-center relative"
-          style={{ backgroundImage: `url(${movie.thumb_url || movie.poster_url})` }}
+          style={{ backgroundImage: `url(${heroImageUrl})` }}
         >
           <div className="absolute inset-0 bg-gradient-to-t from-movie-bg via-movie-bg/60 to-transparent" />
         </div>
@@ -71,9 +74,12 @@ const MovieDetail = () => {
             {/* Movie Poster */}
             <div className="flex-shrink-0">
               <img 
-                src={movie.poster_url || movie.thumb_url} 
+                src={posterUrl} 
                 alt={movie.name}
                 className="w-80 h-auto rounded-xl shadow-2xl"
+                onError={(e) => {
+                  e.currentTarget.src = 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=400&h=600&fit=crop';
+                }}
               />
             </div>
 
@@ -98,7 +104,9 @@ const MovieDetail = () => {
               <div className="flex items-center gap-6 mb-6">
                 <div className="flex items-center gap-2">
                   <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
-                  <span className="text-lg font-semibold">{movie.view ? (movie.view / 10000).toFixed(1) + 'K' : '8.5'}</span>
+                  <span className="text-lg font-semibold">
+                    {movie.view ? (movie.view / 10000).toFixed(1) + 'K lượt xem' : '8.5'}
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
@@ -124,16 +132,30 @@ const MovieDetail = () => {
                 <Badge className="bg-orange-500 text-white">
                   {movie.status === 'ongoing' ? 'Đang chiếu' : 'Hoàn thành'}
                 </Badge>
+                <Badge className="bg-blue-500 text-white">
+                  {movie.quality}
+                </Badge>
+                <Badge className="bg-green-500 text-white">
+                  {movie.lang}
+                </Badge>
               </div>
 
               {/* Description */}
-              <p className="text-movie-muted leading-relaxed mb-8">
-                {movie.content ? movie.content.replace(/<[^>]*>?/gm, '') : 'Chưa có mô tả'}
-              </p>
+              <div className="mb-8">
+                <p className="text-movie-muted leading-relaxed">
+                  {movie.content ? movie.content.replace(/<[^>]*>?/gm, '') : 'Chưa có mô tả cho bộ phim này.'}
+                </p>
+                {movie.episode_current && (
+                  <p className="text-movie-accent mt-2 font-semibold">
+                    Tập hiện tại: {movie.episode_current}
+                    {movie.episode_total && ` / ${movie.episode_total}`}
+                  </p>
+                )}
+              </div>
 
               {/* Action Buttons */}
               <div className="flex gap-4">
-                <Link to={`/watch/${movie.slug}/1`}>
+                <Link to={`/watch/${movie._id}/1`}>
                   <Button className="bg-movie-accent hover:bg-movie-accent/90 text-white px-8 py-3">
                     <Play className="h-5 w-5 mr-2" />
                     Xem ngay
@@ -161,7 +183,7 @@ const MovieDetail = () => {
                 {server.server_data.map((episode, episodeIndex) => (
                   <Link 
                     key={episodeIndex}
-                    to={`/watch/${movie.slug}/${episode.slug}`}
+                    to={`/watch/${movie._id}/${episode.slug}`}
                     className="bg-movie-card rounded-lg p-4 text-center hover:bg-movie-accent transition-colors"
                   >
                     <span className="text-white font-medium">{episode.name}</span>
@@ -174,29 +196,31 @@ const MovieDetail = () => {
       )}
 
       {/* Cast & Crew */}
-      <section className="container mx-auto px-4 py-8">
-        <h2 className="text-2xl font-bold text-movie-text mb-6">Diễn viên & Đạo diễn</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {movie.director?.length > 0 && (
-            <div className="bg-movie-card rounded-xl p-4">
-              <div className="w-16 h-16 bg-movie-accent rounded-full mb-3 mx-auto flex items-center justify-center">
-                <Users className="h-8 w-8 text-white" />
+      {(movie.director?.length > 0 || movie.actor?.length > 0) && (
+        <section className="container mx-auto px-4 py-8">
+          <h2 className="text-2xl font-bold text-movie-text mb-6">Diễn viên & Đạo diễn</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {movie.director?.length > 0 && (
+              <div className="bg-movie-card rounded-xl p-4">
+                <div className="w-16 h-16 bg-movie-accent rounded-full mb-3 mx-auto flex items-center justify-center">
+                  <Users className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-movie-text font-semibold text-center mb-1">Đạo diễn</h3>
+                <p className="text-movie-muted text-center text-sm">{movie.director.join(', ')}</p>
               </div>
-              <h3 className="text-movie-text font-semibold text-center mb-1">Đạo diễn</h3>
-              <p className="text-movie-muted text-center text-sm">{movie.director.join(', ')}</p>
-            </div>
-          )}
-          {movie.actor?.slice(0, 6).map((actor, index) => (
-            <div key={index} className="bg-movie-card rounded-xl p-4">
-              <div className="w-16 h-16 bg-movie-accent rounded-full mb-3 mx-auto flex items-center justify-center">
-                <span className="text-white font-bold">{actor.charAt(0)}</span>
+            )}
+            {movie.actor?.slice(0, 6).map((actor, index) => (
+              <div key={index} className="bg-movie-card rounded-xl p-4">
+                <div className="w-16 h-16 bg-movie-accent rounded-full mb-3 mx-auto flex items-center justify-center">
+                  <span className="text-white font-bold">{actor.charAt(0)}</span>
+                </div>
+                <h3 className="text-movie-text font-semibold text-center mb-1">Diễn viên</h3>
+                <p className="text-movie-muted text-center text-sm">{actor}</p>
               </div>
-              <h3 className="text-movie-text font-semibold text-center mb-1">Diễn viên</h3>
-              <p className="text-movie-muted text-center text-sm">{actor}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Related Movies */}
       {relatedMovies.length > 0 && (

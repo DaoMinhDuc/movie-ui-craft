@@ -14,7 +14,7 @@ import type {
 
 export const movieService = {
   // Lấy danh sách phim mới cập nhật
-  getNewMovies: async (page: number = 1, version: 'v1' | 'v2' | 'v3' = 'v1') => {
+  getNewMovies: async (page: number = 1, version: 'v1' | 'v2' | 'v3' = 'v2') => {
     const endpoint = version === 'v1' 
       ? API_CONFIG.ENDPOINTS.NEW_MOVIES
       : version === 'v2' 
@@ -41,14 +41,17 @@ export const movieService = {
     const searchParams = new URLSearchParams();
     
     Object.entries(queryParams).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
+      if (value !== undefined && value !== null && value !== '') {
         searchParams.append(key, value.toString());
       }
     });
 
-    const { data } = await api.get<ApiResponse<PaginatedResponse<Movie>>>(
-      `${API_CONFIG.ENDPOINTS.MOVIE_LIST}/${type_list}?${searchParams.toString()}`
-    );
+    const queryString = searchParams.toString();
+    const url = queryString 
+      ? `${API_CONFIG.ENDPOINTS.MOVIE_LIST}/${type_list}?${queryString}`
+      : `${API_CONFIG.ENDPOINTS.MOVIE_LIST}/${type_list}`;
+
+    const { data } = await api.get<ApiResponse<PaginatedResponse<Movie>>>(url);
     return data;
   },
 
@@ -57,7 +60,7 @@ export const movieService = {
     const searchParams = new URLSearchParams();
     
     Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
+      if (value !== undefined && value !== null && value !== '') {
         searchParams.append(key, value.toString());
       }
     });
@@ -81,14 +84,17 @@ export const movieService = {
     const searchParams = new URLSearchParams();
     
     Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
+      if (value !== undefined && value !== null && value !== '') {
         searchParams.append(key, value.toString());
       }
     });
 
-    const { data } = await api.get<ApiResponse<PaginatedResponse<Movie>>>(
-      `${API_CONFIG.ENDPOINTS.CATEGORY_DETAIL}/${categorySlug}?${searchParams.toString()}`
-    );
+    const queryString = searchParams.toString();
+    const url = queryString 
+      ? `${API_CONFIG.ENDPOINTS.CATEGORY_DETAIL}/${categorySlug}?${queryString}`
+      : `${API_CONFIG.ENDPOINTS.CATEGORY_DETAIL}/${categorySlug}`;
+
+    const { data } = await api.get<ApiResponse<PaginatedResponse<Movie>>>(url);
     return data;
   },
 
@@ -105,14 +111,17 @@ export const movieService = {
     const searchParams = new URLSearchParams();
     
     Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
+      if (value !== undefined && value !== null && value !== '') {
         searchParams.append(key, value.toString());
       }
     });
 
-    const { data } = await api.get<ApiResponse<PaginatedResponse<Movie>>>(
-      `${API_CONFIG.ENDPOINTS.COUNTRY_DETAIL}/${countrySlug}?${searchParams.toString()}`
-    );
+    const queryString = searchParams.toString();
+    const url = queryString 
+      ? `${API_CONFIG.ENDPOINTS.COUNTRY_DETAIL}/${countrySlug}?${queryString}`
+      : `${API_CONFIG.ENDPOINTS.COUNTRY_DETAIL}/${countrySlug}`;
+
+    const { data } = await api.get<ApiResponse<PaginatedResponse<Movie>>>(url);
     return data;
   },
 
@@ -121,14 +130,17 @@ export const movieService = {
     const searchParams = new URLSearchParams();
     
     Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
+      if (value !== undefined && value !== null && value !== '') {
         searchParams.append(key, value.toString());
       }
     });
 
-    const { data } = await api.get<ApiResponse<PaginatedResponse<Movie>>>(
-      `${API_CONFIG.ENDPOINTS.YEAR}/${year}?${searchParams.toString()}`
-    );
+    const queryString = searchParams.toString();
+    const url = queryString 
+      ? `${API_CONFIG.ENDPOINTS.YEAR}/${year}?${queryString}`
+      : `${API_CONFIG.ENDPOINTS.YEAR}/${year}`;
+
+    const { data } = await api.get<ApiResponse<PaginatedResponse<Movie>>>(url);
     return data;
   }
 };

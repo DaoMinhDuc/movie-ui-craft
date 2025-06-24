@@ -5,22 +5,15 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Settings, Maximize, Volume2, Play
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Header from '@/components/shared/Header';
+import { useMovieDetail } from '@/hooks/useMovies';
 
 const WatchMovie = () => {
   const { id, episode } = useParams();
+  const { data: movie, loading } = useMovieDetail(id || '');
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(2700); // 45 minutes in seconds
-
-  const movie = {
-    id: id || '1',
-    title: 'Tôi Đã Cướp Mất Đêm Đầu Tiên Của Nam Chính',
-    originalTitle: 'The First Night with the Duke',
-    currentEpisode: parseInt(episode || '1'),
-    totalEpisodes: 16,
-    servers: ['Server 1', 'Server 2', 'Server 3'],
-    qualities: ['360p', '480p', '720p', '1080p']
-  };
+  const [selectedServer, setSelectedServer] = useState(0);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -35,6 +28,32 @@ const WatchMovie = () => {
   const togglePlay = () => {
     setIsPlaying(!isPlaying);
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-movie-bg">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center text-movie-muted">Đang tải thông tin phim...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!movie) {
+    return (
+      <div className="min-h-screen bg-movie-bg">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center text-movie-muted">Không tìm thấy thông tin phim</div>
+        </div>
+      </div>
+    );
+  }
+
+  const currentEpisode = parseInt(episode || '1');
+  const totalEpisodes = movie.episodes?.[0]?.server_data?.length || 1;
+  const servers = movie.episodes || [];
 
   return (
     <div className="min-h-screen bg-movie-bg">
@@ -55,9 +74,9 @@ const WatchMovie = () => {
             {/* Movie Title */}
             <div className="mb-4">
               <h1 className="text-2xl font-bold text-movie-text mb-1">
-                {movie.title} - Tập {movie.currentEpisode}
+                {movie.name} - Tập {currentEpisode}
               </h1>
-              <p className="text-movie-muted">{movie.originalTitle}</p>
+              <p className="text-movie-muted">{movie.origin_name}</p>
             </div>
 
             {/* Video Container */}
@@ -74,7 +93,10 @@ const WatchMovie = () => {
                   </div>
                   <p className="text-white text-lg">Video Player</p>
                   <p className="text-gray-400 text-sm mt-2">
-                    Tập {movie.currentEpisode} - {movie.title}
+                    Tập {currentEpisode} - {movie.name}
+                  </p>
+                  <p className="text-gray-400 text-xs mt-1">
+                    Chất lượng: {movie.quality} | {movie.lang}
                   </p>
                 </div>
               </div>
@@ -133,13 +155,13 @@ const WatchMovie = () => {
             {/* Episode Navigation */}
             <div className="flex items-center justify-between mt-6">
               <Link 
-                to={`/watch/${id}/${Math.max(1, movie.currentEpisode - 1)}`}
-                className={`flex items-center gap-2 ${movie.currentEpisode === 1 ? 'opacity-50 pointer-events-none' : ''}`}
+                to={`/watch/${id}/${Math.max(1, currentEpisode - 1)}`}
+                className={`flex items-center gap-2 ${currentEpisode === 1 ? 'opacity-50 pointer-events-none' : ''}`}
               >
                 <Button 
                   variant="outline" 
                   className="border-movie-accent text-movie-accent hover:bg-movie-accent/10"
-                  disabled={movie.currentEpisode === 1}
+                  disabled={currentEpisode === 1}
                 >
                   <ChevronLeft className="h-4 w-4 mr-2" />
                   Tập trước
@@ -148,17 +170,17 @@ const WatchMovie = () => {
 
               <div className="text-center">
                 <p className="text-movie-text font-semibold">
-                  Tập {movie.currentEpisode} / {movie.totalEpisodes}
+                  Tập {currentEpisode} / {totalEpisodes}
                 </p>
               </div>
 
               <Link 
-                to={`/watch/${id}/${Math.min(movie.totalEpisodes, movie.currentEpisode + 1)}`}
-                className={`flex items-center gap-2 ${movie.currentEpisode === movie.totalEpisodes ? 'opacity-50 pointer-events-none' : ''}`}
+                to={`/watch/${id}/${Math.min(totalEpisodes, currentEpisode + 1)}`}
+                className={`flex items-center gap-2 ${currentEpisode === totalEpisodes ? 'opacity-50 pointer-events-none' : ''}`}
               >
                 <Button 
                   className="bg-movie-accent hover:bg-movie-accent/90 text-white"
-                  disabled={movie.currentEpisode === movie.totalEpisodes}
+                  disabled={currentEpisode === totalEpisodes}
                 >
                   Tập tiếp theo
                   <ChevronRight className="h-4 w-4 ml-2" />
@@ -170,72 +192,75 @@ const WatchMovie = () => {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Server Selection */}
-            <div className="bg-movie-card rounded-xl p-4">
-              <h3 className="text-movie-text font-semibold mb-3">Chọn server</h3>
-              <div className="space-y-2">
-                {movie.servers.map((server, index) => (
-                  <Button
-                    key={index}
-                    variant={index === 0 ? "default" : "outline"}
-                    className={`w-full ${
-                      index === 0 
-                        ? "bg-movie-accent hover:bg-movie-accent/90 text-white" 
-                        : "border-movie-accent text-movie-accent hover:bg-movie-accent/10"
-                    }`}
-                  >
-                    {server}
-                  </Button>
-                ))}
+            {servers.length > 0 && (
+              <div className="bg-movie-card rounded-xl p-4">
+                <h3 className="text-movie-text font-semibold mb-3">Chọn server</h3>
+                <div className="space-y-2">
+                  {servers.map((server, index) => (
+                    <Button
+                      key={index}
+                      variant={index === selectedServer ? "default" : "outline"}
+                      className={`w-full ${
+                        index === selectedServer
+                          ? "bg-movie-accent hover:bg-movie-accent/90 text-white" 
+                          : "border-movie-accent text-movie-accent hover:bg-movie-accent/10"
+                      }`}
+                      onClick={() => setSelectedServer(index)}
+                    >
+                      {server.server_name}
+                    </Button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Quality Selection */}
+            {/* Quality & Language Info */}
             <div className="bg-movie-card rounded-xl p-4">
-              <h3 className="text-movie-text font-semibold mb-3">Chất lượng</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {movie.qualities.map((quality, index) => (
-                  <Button
-                    key={index}
-                    variant={quality === '1080p' ? "default" : "outline"}
-                    size="sm"
-                    className={`${
-                      quality === '1080p'
-                        ? "bg-movie-accent hover:bg-movie-accent/90 text-white" 
-                        : "border-movie-accent text-movie-accent hover:bg-movie-accent/10"
-                    }`}
-                  >
-                    {quality}
-                  </Button>
-                ))}
+              <h3 className="text-movie-text font-semibold mb-3">Thông tin</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-movie-muted">Chất lượng:</span>
+                  <Badge className="bg-movie-accent text-white">{movie.quality}</Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-movie-muted">Ngôn ngữ:</span>
+                  <Badge className="bg-green-500 text-white">{movie.lang}</Badge>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-movie-muted">Thời lượng:</span>
+                  <span className="text-movie-text">{movie.time}</span>
+                </div>
               </div>
             </div>
 
             {/* Episodes List */}
-            <div className="bg-movie-card rounded-xl p-4">
-              <h3 className="text-movie-text font-semibold mb-3">Danh sách tập</h3>
-              <div className="max-h-96 overflow-y-auto space-y-2">
-                {Array.from({ length: movie.totalEpisodes }, (_, i) => (
-                  <Link
-                    key={i + 1}
-                    to={`/watch/${id}/${i + 1}`}
-                    className={`block p-3 rounded-lg transition-colors ${
-                      i + 1 === movie.currentEpisode
-                        ? 'bg-movie-accent text-white'
-                        : 'bg-movie-bg text-movie-text hover:bg-movie-accent/20'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">Tập {i + 1}</span>
-                      {i + 1 === movie.currentEpisode && (
-                        <Badge className="bg-white text-movie-accent">
-                          Đang xem
-                        </Badge>
-                      )}
-                    </div>
-                  </Link>
-                ))}
+            {servers.length > 0 && servers[selectedServer]?.server_data && (
+              <div className="bg-movie-card rounded-xl p-4">
+                <h3 className="text-movie-text font-semibold mb-3">Danh sách tập</h3>
+                <div className="max-h-96 overflow-y-auto space-y-2">
+                  {servers[selectedServer].server_data.map((ep, index) => (
+                    <Link
+                      key={index}
+                      to={`/watch/${id}/${index + 1}`}
+                      className={`block p-3 rounded-lg transition-colors ${
+                        index + 1 === currentEpisode
+                          ? 'bg-movie-accent text-white'
+                          : 'bg-movie-bg text-movie-text hover:bg-movie-accent/20'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{ep.name}</span>
+                        {index + 1 === currentEpisode && (
+                          <Badge className="bg-white text-movie-accent">
+                            Đang xem
+                          </Badge>
+                        )}
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
