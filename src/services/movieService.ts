@@ -47,10 +47,12 @@ export const movieService = {
             limit: 50 
           });
           
-          const movie = searchResult.data.items?.find(m => m._id === slugOrId);
-          if (movie) {
-            // Tìm thấy phim, lấy chi tiết bằng slug
-            return await this.getMovieDetail(movie.slug);
+          if (searchResult?.data?.items) {
+            const movie = searchResult.data.items.find(m => m._id === slugOrId);
+            if (movie) {
+              // Tìm thấy phim, lấy chi tiết bằng slug
+              return await this.getMovieDetail(movie.slug);
+            }
           }
         } catch (searchError) {
           console.error('Search fallback failed:', searchError);
