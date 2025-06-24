@@ -24,12 +24,12 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            {/* Hỗ trợ cả slug và ID trong URL */}
             <Route path="/movie/:id" element={<MovieDetail />} />
             <Route path="/watch/:id/:episode" element={<WatchMovie />} />
             <Route path="/category/:category" element={<CategoryPage />} />
             <Route path="/search" element={<SearchPage />} />
             <Route path="/auth" element={<AuthPage />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

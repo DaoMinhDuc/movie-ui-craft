@@ -21,7 +21,8 @@ export const transformMovieToCardData = (movie: Movie) => {
     duration: movie.time || '120 phút',
     genre: movie.category?.map(cat => cat.name) || [],
     isNew: movie.status === 'ongoing',
-    slug: movie.slug
+    slug: movie.slug, // Sử dụng slug thay vì _id
+    _id: movie._id // Giữ lại _id để tham chiếu
   };
 };
 
@@ -39,4 +40,11 @@ export const formatEpisodeInfo = (movie: Movie) => {
     return `${movie.episode_current}/${movie.episode_total}`;
   }
   return movie.episode_current || 'Full';
+};
+
+// Hàm để xác định slug từ ID hoặc slug
+export const getMovieSlugFromParam = (param: string): string => {
+  // Nếu param dài hơn 20 ký tự, có thể là ID, cần chuyển thành slug
+  // Ngược lại, coi như đã là slug
+  return param;
 };

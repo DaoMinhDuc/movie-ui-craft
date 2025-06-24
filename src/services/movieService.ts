@@ -27,12 +27,36 @@ export const movieService = {
     return data;
   },
 
-  // Lấy chi tiết phim
-  getMovieDetail: async (slug: string) => {
-    const { data } = await api.get<ApiResponse<{ item: MovieDetail }>>(
-      `${API_CONFIG.ENDPOINTS.MOVIE_DETAIL}/${slug}`
-    );
-    return data;
+  // Lấy chi tiết phim - sử dụng slug thay vì id
+  getMovieDetail: async (slugOrId: string) => {
+    try {
+      // Thử với slug trước
+      const { data } = await api.get<ApiResponse<{ item: MovieDetail }>>(
+        `${API_CONFIG.ENDPOINTS.MOVIE_DETAIL}/${slugOrId}`
+      );
+      return data;
+    } catch (error: any) {
+      // Nếu lỗi 404 và có dạng ID, thử tìm phim qua search
+      if (error.response?.status === 404 && slugOrId.length > 20) {
+        console.log('Movie not found by slug, trying to find by ID...');
+        try {
+          const searchResult = await this.searchMovies({ 
+            keyword: '', 
+            page: 1, 
+            limit: 50 
+          });
+          
+          const movie = searchResult.data.items.find(m => m._id === slugOrId);
+          if (movie) {
+            // Tìm thấy phim, lấy chi tiết bằng slug
+            return await this.getMovieDetail(movie.slug);
+          }
+        } catch (searchError) {
+          console.error('Search fallback failed:', searchError);
+        }
+      }
+      throw error;
+    }
   },
 
   // Lấy danh sách phim theo loại
@@ -79,7 +103,6 @@ export const movieService = {
     return data;
   },
 
-  // Lấy phim theo thể loại
   getMoviesByCategory: async (categorySlug: string, params: Omit<SearchParams, 'keyword'> = {}) => {
     const searchParams = new URLSearchParams();
     
@@ -98,15 +121,6 @@ export const movieService = {
     return data;
   },
 
-  // Lấy danh sách quốc gia
-  getCountries: async () => {
-    const { data } = await api.get<ApiResponse<Country[]>>(
-      API_CONFIG.ENDPOINTS.COUNTRIES
-    );
-    return data;
-  },
-
-  // Lấy phim theo quốc gia
   getMoviesByCountry: async (countrySlug: string, params: Omit<SearchParams, 'keyword'> = {}) => {
     const searchParams = new URLSearchParams();
     
@@ -125,7 +139,6 @@ export const movieService = {
     return data;
   },
 
-  // Lấy phim theo năm
   getMoviesByYear: async (year: number, params: Omit<SearchParams, 'keyword' | 'year'> = {}) => {
     const searchParams = new URLSearchParams();
     

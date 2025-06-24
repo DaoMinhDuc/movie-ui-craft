@@ -11,7 +11,10 @@ import { transformMovieToCardData, getMovieImageUrl } from '@/utils/movieUtils';
 
 const MovieDetail = () => {
   const { id } = useParams();
-  const { data: movie, loading } = useMovieDetail(id || '');
+  const { data: movieResponse, loading, error } = useMovieDetail(id || '');
+  
+  // Lấy movie data từ response
+  const movie = movieResponse?.data?.item;
   
   // Lấy phim liên quan (cùng thể loại)
   const { data: relatedMoviesData } = useMovieList({
@@ -28,7 +31,31 @@ const MovieDetail = () => {
       <div className="min-h-screen bg-movie-bg">
         <Header />
         <div className="container mx-auto px-4 py-8">
-          <div className="text-center text-movie-muted">Đang tải thông tin phim...</div>
+          <div className="flex items-center justify-center min-h-[50vh]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-movie-accent mx-auto mb-4"></div>
+              <div className="text-movie-muted">Đang tải thông tin phim...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-movie-bg">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center">
+            <div className="text-red-500 mb-4">Lỗi tải thông tin phim</div>
+            <div className="text-movie-muted">{error.message}</div>
+            <Link to="/" className="inline-block mt-4">
+              <Button className="bg-movie-accent hover:bg-movie-accent/90">
+                Quay lại trang chủ
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -39,7 +66,14 @@ const MovieDetail = () => {
       <div className="min-h-screen bg-movie-bg">
         <Header />
         <div className="container mx-auto px-4 py-8">
-          <div className="text-center text-movie-muted">Không tìm thấy thông tin phim</div>
+          <div className="text-center">
+            <div className="text-movie-muted mb-4">Không tìm thấy thông tin phim</div>
+            <Link to="/" className="inline-block">
+              <Button className="bg-movie-accent hover:bg-movie-accent/90">
+                Quay lại trang chủ
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -140,7 +174,6 @@ const MovieDetail = () => {
                 </Badge>
               </div>
 
-              {/* Description */}
               <div className="mb-8">
                 <p className="text-movie-muted leading-relaxed">
                   {movie.content ? movie.content.replace(/<[^>]*>?/gm, '') : 'Chưa có mô tả cho bộ phim này.'}
@@ -155,7 +188,7 @@ const MovieDetail = () => {
 
               {/* Action Buttons */}
               <div className="flex gap-4">
-                <Link to={`/watch/${movie._id}/1`}>
+                <Link to={`/watch/${movie.slug}/1`}>
                   <Button className="bg-movie-accent hover:bg-movie-accent/90 text-white px-8 py-3">
                     <Play className="h-5 w-5 mr-2" />
                     Xem ngay
@@ -183,7 +216,7 @@ const MovieDetail = () => {
                 {server.server_data.map((episode, episodeIndex) => (
                   <Link 
                     key={episodeIndex}
-                    to={`/watch/${movie._id}/${episode.slug}`}
+                    to={`/watch/${movie.slug}/${episode.slug}`}
                     className="bg-movie-card rounded-lg p-4 text-center hover:bg-movie-accent transition-colors"
                   >
                     <span className="text-white font-medium">{episode.name}</span>
@@ -222,7 +255,6 @@ const MovieDetail = () => {
         </section>
       )}
 
-      {/* Related Movies */}
       {relatedMovies.length > 0 && (
         <MovieSection 
           title="Phim liên quan"
