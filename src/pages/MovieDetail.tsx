@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Play, Star, Calendar, Clock, Users, Globe, Heart, Share2 } from 'lucide-react';
@@ -17,14 +16,14 @@ const MovieDetail = () => {
   const movie = movieResponse?.data?.item;
   
   // Lấy phim liên quan (cùng thể loại)
-  const { data: relatedMoviesData } = useMovieList({
+  const { data: relatedMovies } = useMovieList({
     type_list: 'phim-bo',
     category: movie?.category?.[0]?.slug || '',
     page: 1,
     limit: 4
   });
 
-  const relatedMovies = relatedMoviesData?.map(transformMovieToCardData) || [];
+  const relatedMoviesData = relatedMovies?.map(transformMovieToCardData) || [];
 
   if (loading) {
     return (
@@ -255,11 +254,11 @@ const MovieDetail = () => {
         </section>
       )}
 
-      {relatedMovies.length > 0 && (
+      {relatedMoviesData.length > 0 && (
         <MovieSection 
           title="Phim liên quan"
           subtitle="Những bộ phim tương tự bạn có thể thích"
-          movies={relatedMovies}
+          movies={relatedMoviesData}
         />
       )}
     </div>

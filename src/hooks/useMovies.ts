@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { movieService } from '@/services/movieService';
-import type { Movie, MovieDetail, Category, Country, SearchParams, MovieListParams } from '@/types/movie';
+import type { Movie, MovieDetail, Category, Country, SearchParams, MovieListParams, ApiResponse } from '@/types/movie';
 
 export const useNewMovies = (page: number = 1, version: 'v1' | 'v2' | 'v3' = 'v1') => {
   const [data, setData] = useState<Movie[]>([]);
@@ -29,7 +29,7 @@ export const useNewMovies = (page: number = 1, version: 'v1' | 'v2' | 'v3' = 'v1
 };
 
 export const useMovieDetail = (slug: string) => {
-  const [data, setData] = useState<MovieDetail | null>(null);
+  const [data, setData] = useState<ApiResponse<{ item: MovieDetail }> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -40,7 +40,7 @@ export const useMovieDetail = (slug: string) => {
       try {
         setLoading(true);
         const response = await movieService.getMovieDetail(slug);
-        setData(response.data.item);
+        setData(response);
         setError(null);
       } catch (err) {
         setError(err as Error);
