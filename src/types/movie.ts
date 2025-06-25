@@ -5,6 +5,13 @@ export interface ApiResponse<T> {
   data: T;
 }
 
+export interface MovieDetailResponse {
+  status: boolean;
+  msg: string;
+  movie: MovieDetail;
+  episodes: Episode[];
+}
+
 export interface PaginatedResponse<T> {
   items: T[];
   params: {
@@ -53,7 +60,16 @@ export interface Movie {
 }
 
 export interface MovieDetail extends Movie {
-  episodes: Episode[];
+  tmdb?: {
+    type: string;
+    id: string;
+    season?: number;
+    vote_average?: number;
+    vote_count?: number;
+  };
+  imdb?: {
+    id: string | null;
+  };
 }
 
 export interface Episode {

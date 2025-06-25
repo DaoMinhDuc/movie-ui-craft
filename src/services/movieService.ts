@@ -6,8 +6,8 @@ import type {
   PaginatedResponse, 
   Movie, 
   MovieDetail, 
+  MovieDetailResponse,
   Category, 
-  Country, 
   SearchParams, 
   MovieListParams 
 } from '@/types/movie';
@@ -28,10 +28,10 @@ export const movieService = {
   },
 
   // Lấy chi tiết phim - sử dụng slug thay vì id
-  getMovieDetail: async (slugOrId: string) => {
+  getMovieDetail: async (slugOrId: string): Promise<MovieDetailResponse> => {
     try {
       // Thử với slug trước
-      const { data } = await api.get<ApiResponse<{ item: MovieDetail }>>(
+      const { data } = await api.get<MovieDetailResponse>(
         `${API_CONFIG.ENDPOINTS.MOVIE_DETAIL}/${slugOrId}`
       );
       return data;
@@ -49,7 +49,7 @@ export const movieService = {
           
           if (searchResult?.data?.items) {
             const movie = searchResult.data.items.find(m => m._id === slugOrId);
-            if (movie) {
+            if (movie?.slug) {
               // Tìm thấy phim, lấy chi tiết bằng slug
               return await this.getMovieDetail(movie.slug);
             }

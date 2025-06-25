@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Play, Star, Calendar, Clock, Users, Globe, Heart, Share2 } from 'lucide-react';
@@ -10,10 +11,11 @@ import { transformMovieToCardData, getMovieImageUrl } from '@/utils/movieUtils';
 
 const MovieDetail = () => {
   const { id } = useParams();
-  const { data: movieResponse, loading, error } = useMovieDetail(id || '');
+  const { data: movieData, loading, error } = useMovieDetail(id || '');
   
-  // Lấy movie data từ response
-  const movie = movieResponse?.data?.item;
+  // Lấy movie và episodes từ response
+  const movie = movieData?.movie;
+  const episodes = movieData?.episodes || [];
   
   // Lấy phim liên quan (cùng thể loại)
   const { data: relatedMovies } = useMovieList({
@@ -79,7 +81,7 @@ const MovieDetail = () => {
   }
 
   const posterUrl = getMovieImageUrl(movie);
-  const heroImageUrl = movie.thumb_url ? `https://phimimg.com/${movie.thumb_url}` : posterUrl;
+  const heroImageUrl = movie.thumb_url || posterUrl;
 
   return (
     <div className="min-h-screen bg-movie-bg">
@@ -138,7 +140,7 @@ const MovieDetail = () => {
                 <div className="flex items-center gap-2">
                   <Star className="h-5 w-5 text-yellow-400 fill-yellow-400" />
                   <span className="text-lg font-semibold">
-                    {movie.view ? (movie.view / 10000).toFixed(1) + 'K lượt xem' : '8.5'}
+                    {movie.tmdb?.vote_average ? movie.tmdb.vote_average.toFixed(1) : '8.5'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -187,12 +189,14 @@ const MovieDetail = () => {
 
               {/* Action Buttons */}
               <div className="flex gap-4">
-                <Link to={`/watch/${movie.slug}/1`}>
-                  <Button className="bg-movie-accent hover:bg-movie-accent/90 text-white px-8 py-3">
-                    <Play className="h-5 w-5 mr-2" />
-                    Xem ngay
-                  </Button>
-                </Link>
+                {episodes.length > 0 && episodes[0]?.server_data?.length > 0 && (
+                  <Link to={`/watch/${movie.slug}/${episodes[0].server_data[0].slug}`}>
+                    <Button className="bg-movie-accent hover:bg-movie-accent/90 text-white px-8 py-3">
+                      <Play className="h-5 w-5 mr-2" />
+                      Xem ngay
+                    </Button>
+                  </Link>
+                )}
                 {movie.trailer_url && (
                   <Button variant="outline" className="border-movie-accent text-movie-accent hover:bg-movie-accent/10">
                     Xem trailer
@@ -205,14 +209,14 @@ const MovieDetail = () => {
       </section>
 
       {/* Episodes List */}
-      {movie.episodes && movie.episodes.length > 0 && (
+      {episodes && episodes.length > 0 && (
         <section className="container mx-auto px-4 py-12">
           <h2 className="text-2xl font-bold text-movie-text mb-6">Danh sách tập phim</h2>
-          {movie.episodes.map((server, serverIndex) => (
+          {episodes.map((server, serverIndex) => (
             <div key={serverIndex} className="mb-8">
               <h3 className="text-lg font-semibold text-movie-text mb-4">{server.server_name}</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-                {server.server_data.map((episode, episodeIndex) => (
+                {server.server_data?.map((episode, episodeIndex) => (
                   <Link 
                     key={episodeIndex}
                     to={`/watch/${movie.slug}/${episode.slug}`}

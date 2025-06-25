@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight, Settings, Maximize, Volume2, Play, Pause, SkipBack, SkipForward } from 'lucide-react';
@@ -8,14 +9,15 @@ import { useMovieDetail } from '@/hooks/useMovies';
 
 const WatchMovie = () => {
   const { id, episode } = useParams();
-  const { data: movieResponse, loading, error } = useMovieDetail(id || '');
+  const { data: movieData, loading, error } = useMovieDetail(id || '');
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(2700); // 45 minutes in seconds
   const [selectedServer, setSelectedServer] = useState(0);
 
-  // Lấy movie data từ response
-  const movie = movieResponse?.data?.item;
+  // Lấy movie và episodes từ response
+  const movie = movieData?.movie;
+  const episodes = movieData?.episodes || [];
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -69,11 +71,10 @@ const WatchMovie = () => {
   }
 
   // Tìm tập hiện tại
-  const currentServer = movie.episodes?.[selectedServer];
+  const currentServer = episodes[selectedServer];
   const currentEpisodeData = currentServer?.server_data?.find(ep => ep.slug === episode);
   const currentEpisodeIndex = currentServer?.server_data?.findIndex(ep => ep.slug === episode) ?? 0;
   const totalEpisodes = currentServer?.server_data?.length || 0;
-  const servers = movie.episodes || [];
 
   return (
     <div className="min-h-screen bg-movie-bg">
@@ -184,8 +185,8 @@ const WatchMovie = () => {
 
             {/* Episode Navigation */}
             <div className="flex items-center justify-between mt-6">
-              {currentEpisodeIndex > 0 ? (
-                <Link to={`/watch/${movie.slug}/${currentServer?.server_data[currentEpisodeIndex - 1]?.slug}`}>
+              {currentEpisodeIndex > 0 && currentServer?.server_data ? (
+                <Link to={`/watch/${movie.slug}/${currentServer.server_data[currentEpisodeIndex - 1]?.slug}`}>
                   <Button variant="outline" className="border-movie-accent text-movie-accent hover:bg-movie-accent/10">
                     <ChevronLeft className="h-4 w-4 mr-2" />
                     Tập trước
@@ -201,8 +202,8 @@ const WatchMovie = () => {
                 </p>
               </div>
 
-              {currentEpisodeIndex < totalEpisodes - 1 ? (
-                <Link to={`/watch/${movie.slug}/${currentServer?.server_data[currentEpisodeIndex + 1]?.slug}`}>
+              {currentEpisodeIndex < totalEpisodes - 1 && currentServer?.server_data ? (
+                <Link to={`/watch/${movie.slug}/${currentServer.server_data[currentEpisodeIndex + 1]?.slug}`}>
                   <Button className="bg-movie-accent hover:bg-movie-accent/90 text-white">
                     Tập tiếp theo
                     <ChevronRight className="h-4 w-4 ml-2" />
@@ -217,11 +218,11 @@ const WatchMovie = () => {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Server Selection */}
-            {servers.length > 0 && (
+            {episodes.length > 0 && (
               <div className="bg-movie-card rounded-xl p-4">
                 <h3 className="text-movie-text font-semibold mb-3">Chọn server</h3>
                 <div className="space-y-2">
-                  {servers.map((server, index) => (
+                  {episodes.map((server, index) => (
                     <Button
                       key={index}
                       variant={index === selectedServer ? "default" : "outline"}
@@ -259,11 +260,11 @@ const WatchMovie = () => {
             </div>
 
             {/* Episodes List */}
-            {servers.length > 0 && servers[selectedServer]?.server_data && (
+            {episodes.length > 0 && episodes[selectedServer]?.server_data && (
               <div className="bg-movie-card rounded-xl p-4">
                 <h3 className="text-movie-text font-semibold mb-3">Danh sách tập</h3>
                 <div className="max-h-96 overflow-y-auto space-y-2">
-                  {servers[selectedServer].server_data.map((ep, index) => (
+                  {episodes[selectedServer].server_data.map((ep, index) => (
                     <Link
                       key={index}
                       to={`/watch/${movie.slug}/${ep.slug}`}
