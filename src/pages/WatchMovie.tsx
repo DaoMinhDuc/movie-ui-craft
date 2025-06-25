@@ -5,7 +5,9 @@ import { ArrowLeft, ChevronLeft, ChevronRight, Settings, Maximize, Volume2, Play
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Header from '@/components/shared/Header';
+import LazyImage from '@/components/shared/LazyImage';
 import { useMovieDetail } from '@/hooks/useMovies';
+import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 
 const WatchMovie = () => {
   const { id, episode } = useParams();
@@ -108,6 +110,7 @@ const WatchMovie = () => {
                   className="w-full aspect-video"
                   allowFullScreen
                   title={`${movie.name} - ${currentEpisodeData.name}`}
+                  loading="lazy"
                 />
               ) : (
                 <div className="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
@@ -259,39 +262,80 @@ const WatchMovie = () => {
               </div>
             </div>
 
-            {/* Episodes List */}
+            {/* Episodes List - Giao diện ô vuông mới */}
             {episodes.length > 0 && episodes[selectedServer]?.server_data && (
-              <div className="bg-movie-card rounded-xl p-4">
-                <h3 className="text-movie-text font-semibold mb-3">Danh sách tập</h3>
-                <div className="max-h-96 overflow-y-auto space-y-2">
-                  {episodes[selectedServer].server_data.map((ep, index) => (
-                    <Link
-                      key={index}
-                      to={`/watch/${movie.slug}/${ep.slug}`}
-                      className={`block p-3 rounded-lg transition-colors ${
-                        ep.slug === episode
-                          ? 'bg-movie-accent text-white'
-                          : 'bg-movie-bg text-movie-text hover:bg-movie-accent/20'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{ep.name}</span>
-                        {ep.slug === episode && (
-                          <Badge className="bg-white text-movie-accent">
-                            Đang xem
-                          </Badge>
-                        )}
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
+              <EpisodesList 
+                episodes={episodes[selectedServer].server_data}
+                movieSlug={movie.slug}
+                currentEpisode={episode}
+              />
             )}
           </div>
         </div>
       </div>
 
       <div className="h-20" />
+    </div>
+  );
+};
+
+// Component riêng cho danh sách tập phim với giao diện ô vuông
+const EpisodesList: React.FC<{
+  episodes: Array<{ name: string; slug: string; }>;
+  movieSlug: string;
+  currentEpisode?: string;
+}> = ({ episodes, movieSlug, currentEpisode }) => {
+  const { ref, hasIntersected } = useIntersectionObserver({
+    threshold: 0.1,
+    rootMargin: '50px'
+  });
+
+  return (
+    <div ref={ref} className="bg-movie-card rounded-xl p-4">
+      <h3 className="text-movie-text font-semibold mb-3">Danh sách tập</h3>
+      {hasIntersected ? (
+        <div className="max-h-96 overflow-y-auto">
+          <div className="grid grid-cols-4 gap-3">
+            {episodes.map((ep, index) => (
+              <Link
+                key={index}
+                to={`/watch/${movieSlug}/${ep.slug}`}
+                className={`group relative aspect-square rounded-lg transition-all duration-200 ${
+                  ep.slug === currentEpisode
+                    ? 'bg-movie-accent scale-105 shadow-lg'
+                    : 'bg-movie-bg hover:bg-movie-accent/20 hover:scale-105'
+                }`}
+              >
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-2">
+                  <div className={`text-center ${
+                    ep.slug === currentEpisode ? 'text-white' : 'text-blue-400'
+                  }`}>
+                    <div className="font-bold text-sm mb-1">
+                      {index + 1}
+                    </div>
+                    <div className="text-xs leading-tight">
+                      {ep.name.replace(/Tập\s*\d+/i, '').trim() || `Tập ${index + 1}`}
+                    </div>
+                  </div>
+                  {ep.slug === currentEpisode && (
+                    <div className="absolute top-1 right-1">
+                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                    </div>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="max-h-96 overflow-y-auto">
+          <div className="grid grid-cols-4 gap-3">
+            {Array.from({ length: 12 }).map((_, index) => (
+              <div key={index} className="aspect-square bg-gray-800 rounded-lg animate-pulse"></div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

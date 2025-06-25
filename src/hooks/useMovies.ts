@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { movieService } from '@/services/movieService';
 import type { Movie, MovieDetail, Category, SearchParams, MovieListParams, MovieDetailResponse, Episode } from '@/types/movie';
@@ -18,9 +17,10 @@ export const useNewMovies = (page: number = 1, version: 'v1' | 'v2' | 'v3' = 'v1
         // Kiểm tra response structure an toàn
         if (response?.data?.items && Array.isArray(response.data.items)) {
           setData(response.data.items);
-        } else if (response?.items && Array.isArray(response.items)) {
-          // Fallback cho trường hợp response trực tiếp chứa items
-          setData(response.items);
+        } else if (response?.data && Array.isArray(response.data)) {
+          setData(response.data);
+        } else if (Array.isArray(response)) {
+          setData(response);
         } else {
           console.warn('Invalid response structure for new movies:', response);
           setData([]);
@@ -94,8 +94,10 @@ export const useMovieList = (params: MovieListParams) => {
         // Kiểm tra response structure an toàn
         if (response?.data?.items && Array.isArray(response.data.items)) {
           setData(response.data.items);
-        } else if (response?.items && Array.isArray(response.items)) {
-          setData(response.items);
+        } else if (response?.data && Array.isArray(response.data)) {
+          setData(response.data);
+        } else if (Array.isArray(response)) {
+          setData(response);
         } else {
           console.warn('Invalid response structure for movie list:', response);
           setData([]);
@@ -136,8 +138,10 @@ export const useSearchMovies = (params: SearchParams) => {
         // Kiểm tra response structure an toàn
         if (response?.data?.items && Array.isArray(response.data.items)) {
           setData(response.data.items);
-        } else if (response?.items && Array.isArray(response.items)) {
-          setData(response.items);
+        } else if (response?.data && Array.isArray(response.data)) {
+          setData(response.data);
+        } else if (Array.isArray(response)) {
+          setData(response);
         } else {
           console.warn('Invalid response structure for search:', response);
           setData([]);
