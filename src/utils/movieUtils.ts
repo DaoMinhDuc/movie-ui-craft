@@ -11,7 +11,7 @@ export const transformMovieToCardData = (movie: Movie) => {
   };
 
   return {
-    id: movie._id,
+    id: movie.slug, // Sử dụng slug làm ID chính
     title: movie.name,
     subtitle: movie.origin_name,
     image: getFullImageUrl(movie.poster_url || movie.thumb_url),
@@ -21,7 +21,7 @@ export const transformMovieToCardData = (movie: Movie) => {
     duration: movie.time || '120 phút',
     genre: movie.category?.map(cat => cat.name) || [],
     isNew: movie.status === 'ongoing',
-    slug: movie.slug, // Sử dụng slug thay vì _id
+    slug: movie.slug,
     _id: movie._id // Giữ lại _id để tham chiếu
   };
 };
@@ -42,9 +42,13 @@ export const formatEpisodeInfo = (movie: Movie) => {
   return movie.episode_current || 'Full';
 };
 
-// Hàm để xác định slug từ ID hoặc slug
+// Hàm để lấy slug từ URL parameter (có thể là slug hoặc ID)
 export const getMovieSlugFromParam = (param: string): string => {
-  // Nếu param dài hơn 20 ký tự, có thể là ID, cần chuyển thành slug
+  // Nếu param có dạng ID dài (>20 ký tự), cần convert thành slug
   // Ngược lại, coi như đã là slug
+  if (param.length > 20 && !param.includes('-')) {
+    // Đây có thể là ID, cần tìm cách convert hoặc redirect
+    console.warn('URL parameter appears to be an ID, should use slug instead:', param);
+  }
   return param;
 };

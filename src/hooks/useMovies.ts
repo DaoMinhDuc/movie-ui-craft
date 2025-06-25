@@ -15,9 +15,12 @@ export const useNewMovies = (page: number = 1, version: 'v1' | 'v2' | 'v3' = 'v1
         const response = await movieService.getNewMovies(page, version);
         console.log('useNewMovies response:', response);
         
-        // Xử lý response an toàn
+        // Kiểm tra response structure an toàn
         if (response?.data?.items && Array.isArray(response.data.items)) {
           setData(response.data.items);
+        } else if (response?.items && Array.isArray(response.items)) {
+          // Fallback cho trường hợp response trực tiếp chứa items
+          setData(response.items);
         } else {
           console.warn('Invalid response structure for new movies:', response);
           setData([]);
@@ -88,9 +91,11 @@ export const useMovieList = (params: MovieListParams) => {
         const response = await movieService.getMovieList(params);
         console.log('useMovieList response:', response);
         
-        // Xử lý response an toàn
+        // Kiểm tra response structure an toàn
         if (response?.data?.items && Array.isArray(response.data.items)) {
           setData(response.data.items);
+        } else if (response?.items && Array.isArray(response.items)) {
+          setData(response.items);
         } else {
           console.warn('Invalid response structure for movie list:', response);
           setData([]);
@@ -128,9 +133,11 @@ export const useSearchMovies = (params: SearchParams) => {
         const response = await movieService.searchMovies(params);
         console.log('useSearchMovies response:', response);
         
-        // Xử lý response an toàn
+        // Kiểm tra response structure an toàn
         if (response?.data?.items && Array.isArray(response.data.items)) {
           setData(response.data.items);
+        } else if (response?.items && Array.isArray(response.items)) {
+          setData(response.items);
         } else {
           console.warn('Invalid response structure for search:', response);
           setData([]);
@@ -163,9 +170,11 @@ export const useCategories = () => {
         const response = await movieService.getCategories();
         console.log('useCategories response:', response);
         
-        // Xử lý response an toàn
+        // Kiểm tra response structure an toàn
         if (response?.data && Array.isArray(response.data)) {
           setData(response.data);
+        } else if (Array.isArray(response)) {
+          setData(response);
         } else {
           console.warn('Invalid response structure for categories:', response);
           setData([]);

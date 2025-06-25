@@ -27,39 +27,12 @@ export const movieService = {
     return data;
   },
 
-  // Lấy chi tiết phim - sử dụng slug thay vì id
-  getMovieDetail: async (slugOrId: string): Promise<MovieDetailResponse> => {
-    try {
-      // Thử với slug trước
-      const { data } = await api.get<MovieDetailResponse>(
-        `${API_CONFIG.ENDPOINTS.MOVIE_DETAIL}/${slugOrId}`
-      );
-      return data;
-    } catch (error: unknown) {
-      // Nếu lỗi 404 và có dạng ID, thử tìm phim qua search
-      const axiosError = error as { response?: { status: number } };
-      if (axiosError.response?.status === 404 && slugOrId.length > 20) {
-        console.log('Movie not found by slug, trying to find by ID...');
-        try {
-          const searchResult = await this.searchMovies({ 
-            keyword: '', 
-            page: 1, 
-            limit: 50 
-          });
-          
-          if (searchResult?.data?.items && Array.isArray(searchResult.data.items)) {
-            const movie = searchResult.data.items.find(m => m._id === slugOrId);
-            if (movie?.slug) {
-              // Tìm thấy phim, lấy chi tiết bằng slug
-              return await this.getMovieDetail(movie.slug);
-            }
-          }
-        } catch (searchError) {
-          console.error('Search fallback failed:', searchError);
-        }
-      }
-      throw error;
-    }
+  // Lấy chi tiết phim - sử dụng slug
+  getMovieDetail: async (slug: string): Promise<MovieDetailResponse> => {
+    const { data } = await api.get<MovieDetailResponse>(
+      `${API_CONFIG.ENDPOINTS.MOVIE_DETAIL}/${slug}`
+    );
+    return data;
   },
 
   // Lấy danh sách phim theo loại
