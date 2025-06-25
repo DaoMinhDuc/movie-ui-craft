@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, ChevronLeft, ChevronRight, Settings, Maximize, Volume2, Play, Pause, SkipBack, SkipForward } from 'lucide-react';
@@ -262,7 +261,7 @@ const WatchMovie = () => {
               </div>
             </div>
 
-            {/* Episodes List - Giao diện ô vuông mới */}
+            {/* Episodes List - Giao diện ô vuông nhỏ hơn */}
             {episodes.length > 0 && episodes[selectedServer]?.server_data && (
               <EpisodesList 
                 episodes={episodes[selectedServer].server_data}
@@ -279,7 +278,7 @@ const WatchMovie = () => {
   );
 };
 
-// Component riêng cho danh sách tập phim với giao diện ô vuông
+// Component riêng cho danh sách tập phim với giao diện ô vuông nhỏ hơn (1x1)
 const EpisodesList: React.FC<{
   episodes: Array<{ name: string; slug: string; }>;
   movieSlug: string;
@@ -295,7 +294,7 @@ const EpisodesList: React.FC<{
       <h3 className="text-movie-text font-semibold mb-3">Danh sách tập</h3>
       {hasIntersected ? (
         <div className="max-h-96 overflow-y-auto">
-          <div className="grid grid-cols-4 gap-3">
+          <div className="grid grid-cols-6 gap-2">
             {episodes.map((ep, index) => (
               <Link
                 key={index}
@@ -306,20 +305,17 @@ const EpisodesList: React.FC<{
                     : 'bg-movie-bg hover:bg-movie-accent/20 hover:scale-105'
                 }`}
               >
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-2">
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-1">
                   <div className={`text-center ${
                     ep.slug === currentEpisode ? 'text-white' : 'text-blue-400'
                   }`}>
-                    <div className="font-bold text-sm mb-1">
+                    <div className="font-bold text-xs">
                       {index + 1}
-                    </div>
-                    <div className="text-xs leading-tight">
-                      {ep.name.replace(/Tập\s*\d+/i, '').trim() || `Tập ${index + 1}`}
                     </div>
                   </div>
                   {ep.slug === currentEpisode && (
-                    <div className="absolute top-1 right-1">
-                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+                    <div className="absolute top-0.5 right-0.5">
+                      <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
                     </div>
                   )}
                 </div>
@@ -329,8 +325,8 @@ const EpisodesList: React.FC<{
         </div>
       ) : (
         <div className="max-h-96 overflow-y-auto">
-          <div className="grid grid-cols-4 gap-3">
-            {Array.from({ length: 12 }).map((_, index) => (
+          <div className="grid grid-cols-6 gap-2">
+            {Array.from({ length: 18 }).map((_, index) => (
               <div key={index} className="aspect-square bg-gray-800 rounded-lg animate-pulse"></div>
             ))}
           </div>
