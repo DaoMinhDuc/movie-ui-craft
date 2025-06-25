@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { movieService } from '@/services/movieService';
-import type { Movie, MovieDetail, Category, SearchParams, MovieListParams, MovieDetailResponse } from '@/types/movie';
+import type { Movie, MovieDetail, Category, SearchParams, MovieListParams, MovieDetailResponse, Episode } from '@/types/movie';
 
 export const useNewMovies = (page: number = 1, version: 'v1' | 'v2' | 'v3' = 'v1') => {
   const [data, setData] = useState<Movie[]>([]);
@@ -13,10 +13,20 @@ export const useNewMovies = (page: number = 1, version: 'v1' | 'v2' | 'v3' = 'v1
       try {
         setLoading(true);
         const response = await movieService.getNewMovies(page, version);
-        setData(response.data.items || []);
+        console.log('useNewMovies response:', response);
+        
+        // Xử lý response an toàn
+        if (response?.data?.items && Array.isArray(response.data.items)) {
+          setData(response.data.items);
+        } else {
+          console.warn('Invalid response structure for new movies:', response);
+          setData([]);
+        }
         setError(null);
       } catch (err) {
+        console.error('Error fetching new movies:', err);
         setError(err as Error);
+        setData([]);
       } finally {
         setLoading(false);
       }
@@ -29,7 +39,7 @@ export const useNewMovies = (page: number = 1, version: 'v1' | 'v2' | 'v3' = 'v1
 };
 
 export const useMovieDetail = (slug: string) => {
-  const [data, setData] = useState<{ movie: MovieDetail; episodes: any[] } | null>(null);
+  const [data, setData] = useState<{ movie: MovieDetail; episodes: Episode[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -40,13 +50,21 @@ export const useMovieDetail = (slug: string) => {
       try {
         setLoading(true);
         const response: MovieDetailResponse = await movieService.getMovieDetail(slug);
-        setData({
-          movie: response.movie,
-          episodes: response.episodes || []
-        });
+        console.log('useMovieDetail response:', response);
+        
+        if (response?.movie) {
+          setData({
+            movie: response.movie,
+            episodes: response.episodes || []
+          });
+        } else {
+          throw new Error('Invalid movie detail response');
+        }
         setError(null);
       } catch (err) {
+        console.error('Error fetching movie detail:', err);
         setError(err as Error);
+        setData(null);
       } finally {
         setLoading(false);
       }
@@ -68,10 +86,20 @@ export const useMovieList = (params: MovieListParams) => {
       try {
         setLoading(true);
         const response = await movieService.getMovieList(params);
-        setData(response.data.items || []);
+        console.log('useMovieList response:', response);
+        
+        // Xử lý response an toàn
+        if (response?.data?.items && Array.isArray(response.data.items)) {
+          setData(response.data.items);
+        } else {
+          console.warn('Invalid response structure for movie list:', response);
+          setData([]);
+        }
         setError(null);
       } catch (err) {
+        console.error('Error fetching movie list:', err);
         setError(err as Error);
+        setData([]);
       } finally {
         setLoading(false);
       }
@@ -98,10 +126,20 @@ export const useSearchMovies = (params: SearchParams) => {
       try {
         setLoading(true);
         const response = await movieService.searchMovies(params);
-        setData(response.data.items || []);
+        console.log('useSearchMovies response:', response);
+        
+        // Xử lý response an toàn
+        if (response?.data?.items && Array.isArray(response.data.items)) {
+          setData(response.data.items);
+        } else {
+          console.warn('Invalid response structure for search:', response);
+          setData([]);
+        }
         setError(null);
       } catch (err) {
+        console.error('Error searching movies:', err);
         setError(err as Error);
+        setData([]);
       } finally {
         setLoading(false);
       }
@@ -123,10 +161,20 @@ export const useCategories = () => {
       try {
         setLoading(true);
         const response = await movieService.getCategories();
-        setData(response.data || []);
+        console.log('useCategories response:', response);
+        
+        // Xử lý response an toàn
+        if (response?.data && Array.isArray(response.data)) {
+          setData(response.data);
+        } else {
+          console.warn('Invalid response structure for categories:', response);
+          setData([]);
+        }
         setError(null);
       } catch (err) {
+        console.error('Error fetching categories:', err);
         setError(err as Error);
+        setData([]);
       } finally {
         setLoading(false);
       }

@@ -47,7 +47,7 @@ export const movieService = {
             limit: 50 
           });
           
-          if (searchResult?.data?.items) {
+          if (searchResult?.data?.items && Array.isArray(searchResult.data.items)) {
             const movie = searchResult.data.items.find(m => m._id === slugOrId);
             if (movie?.slug) {
               // Tìm thấy phim, lấy chi tiết bằng slug
