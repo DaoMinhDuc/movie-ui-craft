@@ -1,38 +1,21 @@
 import React, { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, ChevronLeft, ChevronRight, Settings, Maximize, Volume2, Play, Pause, SkipBack, SkipForward } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Header from '@/components/shared/Header';
-import LazyImage from '@/components/shared/LazyImage';
+import VideoPlayerWithControls from '@/components/shared/VideoPlayerWithControls';
 import { useMovieDetail } from '@/hooks/useMovies';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
 
 const WatchMovie = () => {
   const { id, episode } = useParams();
   const { data: movieData, loading, error } = useMovieDetail(id || '');
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(2700); // 45 minutes in seconds
   const [selectedServer, setSelectedServer] = useState(0);
 
   // Lấy movie và episodes từ response
   const movie = movieData?.movie;
   const episodes = movieData?.episodes || [];
-
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    if (hours > 0) {
-      return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const togglePlay = () => {
-    setIsPlaying(!isPlaying);
-  };
 
   if (loading) {
     return (
@@ -102,8 +85,29 @@ const WatchMovie = () => {
             </div>
 
             {/* Video Container */}
-            <div className="relative bg-black rounded-xl overflow-hidden group">
-              {currentEpisodeData?.link_embed ? (
+            <div className="relative bg-black rounded-xl overflow-hidden">
+              {currentEpisodeData?.link_m3u8 ? (
+                <VideoPlayerWithControls
+                  src={currentEpisodeData.link_m3u8}
+                  poster={movie.poster_url || movie.thumb_url}
+                  autoPlay={false}
+                  width="100%"
+                  height="auto"
+                  className="aspect-video"
+                  showCustomControls={true}
+                  onError={(error) => {
+                    console.error('Video error:', error);
+                  }}
+                  onSkipBackward={() => {
+                    // Có thể thêm logic chuyển tập trước
+                    console.log('Skip backward');
+                  }}
+                  onSkipForward={() => {
+                    // Có thể thêm logic chuyển tập sau
+                    console.log('Skip forward');
+                  }}
+                />
+              ) : currentEpisodeData?.link_embed ? (
                 <iframe
                   src={currentEpisodeData.link_embed}
                   className="w-full aspect-video"
@@ -115,71 +119,15 @@ const WatchMovie = () => {
                 <div className="aspect-video bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
                   <div className="text-center">
                     <div className="w-20 h-20 bg-movie-accent rounded-full flex items-center justify-center mb-4 mx-auto">
-                      {isPlaying ? (
-                        <Pause className="h-8 w-8 text-white" />
-                      ) : (
-                        <Play className="h-8 w-8 text-white" />
-                      )}
+                      <span className="text-white text-2xl">📺</span>
                     </div>
-                    <p className="text-white text-lg">Video Player</p>
+                    <p className="text-white text-lg">Không có nguồn video</p>
                     <p className="text-gray-400 text-sm mt-2">
                       {currentEpisodeData?.name || `Tập ${currentEpisodeIndex + 1}`} - {movie.name}
                     </p>
                     <p className="text-gray-400 text-xs mt-1">
                       Chất lượng: {movie.quality} | {movie.lang}
                     </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Video Controls */}
-              {!currentEpisodeData?.link_embed && (
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                  {/* Progress Bar */}
-                  <div className="w-full bg-gray-600 rounded-full h-1 mb-4 cursor-pointer">
-                    <div 
-                      className="bg-movie-accent h-1 rounded-full transition-all"
-                      style={{ width: `${(currentTime / duration) * 100}%` }}
-                    />
-                  </div>
-
-                  {/* Control Buttons */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Button 
-                        size="icon" 
-                        variant="ghost" 
-                        className="text-white hover:text-movie-accent"
-                        onClick={togglePlay}
-                      >
-                        {isPlaying ? (
-                          <Pause className="h-5 w-5" />
-                        ) : (
-                          <Play className="h-5 w-5" />
-                        )}
-                      </Button>
-                      <Button size="icon" variant="ghost" className="text-white hover:text-movie-accent">
-                        <SkipBack className="h-5 w-5" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="text-white hover:text-movie-accent">
-                        <SkipForward className="h-5 w-5" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="text-white hover:text-movie-accent">
-                        <Volume2 className="h-5 w-5" />
-                      </Button>
-                      <span className="text-white text-sm">
-                        {formatTime(currentTime)} / {formatTime(duration)}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <Button size="icon" variant="ghost" className="text-white hover:text-movie-accent">
-                        <Settings className="h-5 w-5" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="text-white hover:text-movie-accent">
-                        <Maximize className="h-5 w-5" />
-                      </Button>
-                    </div>
                   </div>
                 </div>
               )}
