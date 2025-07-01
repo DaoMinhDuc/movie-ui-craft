@@ -35,25 +35,71 @@ const Index = () => {
   const series = seriesData?.map(transformMovieToCardData) || [];
   const movies = moviesData?.map(transformMovieToCardData) || [];
 
-  // Tạo dữ liệu featured movies cho carousel
-  const featuredMovies = newMoviesData?.slice(0, 5)?.map(movie => ({
-    id: movie.slug || movie._id || '1',
-    title: movie.name || 'Phim hay',
-    subtitle: movie.origin_name,
-    description: movie.content || `${movie.name} - Một bộ phim hấp dẫn với cfabout đặc sắc và nội dung thú vị. Đây là một trong những bộ phim được yêu thích và theo dõi nhiều nhất hiện nại.`,
-    image: movie.poster_url || movie.thumb_url || 'https://images.unsplash.com/photo-1489844097929-c8d5b91c456e?w=1200&h=600&fit=crop',
-    rating: 8.5,
-    year: movie.year?.toString() || '2024',
-    duration: '120 phút',
-    genre: movie.category?.map(cat => cat.name) || ['Hành động'],
-    isNew: true
-  })) || [];
+  // Tạo dữ liệu featured movies cho carousel từ tất cả các loại phim
+  const createFeaturedMovies = () => {
+    const featuredList = [];
+    
+    // Lấy 2 phim từ phim mới cập nhật
+    if (newMoviesData && newMoviesData.length > 0) {
+      const newMoviesFeatured = newMoviesData.slice(0, 2).map(movie => ({
+        id: movie.slug || movie._id || '1',
+        title: movie.name || 'Phim hay',
+        subtitle: movie.origin_name,
+        description: movie.content || `${movie.name} - Một bộ phim hấp dẫn với nội dung đặc sắc và câu chuyện thú vị. Đây là một trong những bộ phim được yêu thích và theo dõi nhiều nhất hiện nay.`,
+        image: movie.poster_url || movie.thumb_url || 'https://images.unsplash.com/photo-1489844097929-c8d5b91c456e?w=1200&h=600&fit=crop',
+        rating: 8.5,
+        year: movie.year?.toString() || '2024',
+        duration: '120 phút',
+        genre: movie.category?.map(cat => cat.name) || ['Hành động'],
+        isNew: true
+      }));
+      featuredList.push(...newMoviesFeatured);
+    }
+
+    // Lấy 2 phim từ phim bộ mới nhất
+    if (seriesData && seriesData.length > 0) {
+      const seriesFeatured = seriesData.slice(0, 2).map(movie => ({
+        id: movie.slug || movie._id || '1',
+        title: movie.name || 'Phim bộ',
+        subtitle: movie.origin_name,
+        description: movie.content || `${movie.name} - Một bộ phim bộ hấp dẫn với nhiều tập phim thú vị. Theo dõi hành trình của các nhân vật qua từng tập phim đầy kịch tính.`,
+        image: movie.poster_url || movie.thumb_url || 'https://images.unsplash.com/photo-1489844097929-c8d5b91c456e?w=1200&h=600&fit=crop',
+        rating: 8.7,
+        year: movie.year?.toString() || '2024',
+        duration: 'Nhiều tập',
+        genre: movie.category?.map(cat => cat.name) || ['Phim bộ'],
+        isNew: false
+      }));
+      featuredList.push(...seriesFeatured);
+    }
+
+    // Lấy 1 phim từ phim lẻ mới nhất
+    if (moviesData && moviesData.length > 0) {
+      const moviesFeatured = moviesData.slice(0, 1).map(movie => ({
+        id: movie.slug || movie._id || '1',
+        title: movie.name || 'Phim lẻ',
+        subtitle: movie.origin_name,
+        description: movie.content || `${movie.name} - Một bộ phim lẻ với câu chuyện hoàn chỉnh và hấp dẫn. Thưởng thức trọn vẹn câu chuyện trong một bộ phim duy nhất.`,
+        image: movie.poster_url || movie.thumb_url || 'https://images.unsplash.com/photo-1489844097929-c8d5b91c456e?w=1200&h=600&fit=crop',
+        rating: 8.3,
+        year: movie.year?.toString() || '2024',
+        duration: '120 phút',
+        genre: movie.category?.map(cat => cat.name) || ['Phim lẻ'],
+        isNew: false
+      }));
+      featuredList.push(...moviesFeatured);
+    }
+
+    return featuredList;
+  };
+
+  const featuredMovies = createFeaturedMovies();
 
   return (
     <div className="min-h-screen bg-movie-bg">
       <Header />
       
-      {/* Hero Carousel */}
+      {/* Hero Carousel - Hiển thị khi có ít nhất 1 phim featured */}
       {featuredMovies.length > 0 && <HeroCarousel movies={featuredMovies} />}
 
       {/* Category Grid với lazy loading */}
