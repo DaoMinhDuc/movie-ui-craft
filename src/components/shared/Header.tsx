@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, User, Menu, Bell, LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,8 +16,19 @@ import {
 
 const Header = () => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [isScrolled, setIsScrolled] = useState(false);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollTop = window.scrollY;
+      setIsScrolled(scrollTop > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +44,11 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-movie-bg border-b border-movie-card sticky top-0 z-50 backdrop-blur-sm">
+    <header className={`border-b border-movie-card sticky top-0 z-50 transition-all duration-300 ${
+      isScrolled 
+        ? 'bg-movie-bg/95 backdrop-blur-md' 
+        : 'bg-transparent'
+    }`}>
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
