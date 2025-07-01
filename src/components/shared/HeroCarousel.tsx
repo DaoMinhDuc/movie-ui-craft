@@ -33,7 +33,7 @@ interface HeroCarouselProps {
 
 const HeroCarousel: React.FC<HeroCarouselProps> = ({ movies }) => {
   return (
-    <section className="relative h-[70vh] min-h-[500px] overflow-hidden">
+    <section className="relative h-[80vh] min-h-[600px] overflow-hidden">
       <Carousel className="w-full h-full" opts={{ align: "start", loop: true }}>
         <CarouselContent className="h-full">
           {movies.map((movie) => (

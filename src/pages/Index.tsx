@@ -39,6 +39,17 @@ const Index = () => {
   const createFeaturedMovies = () => {
     const featuredList = [];
     
+    // Danh sách ảnh nền đa dạng
+    const backgroundImages = [
+      'https://images.unsplash.com/photo-1489844097929-c8d5b91c456e?w=1200&h=800&fit=crop',
+      'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1200&h=800&fit=crop',
+      'https://images.unsplash.com/photo-1500673922987-e212871fec22?w=1200&h=800&fit=crop',
+      'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1200&h=800&fit=crop',
+      'https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=1200&h=800&fit=crop'
+    ];
+    
+    let imageIndex = 0;
+    
     // Lấy 2 phim từ phim mới cập nhật
     if (newMoviesData && newMoviesData.length > 0) {
       const newMoviesFeatured = newMoviesData.slice(0, 2).map(movie => ({
@@ -46,7 +57,7 @@ const Index = () => {
         title: movie.name || 'Phim hay',
         subtitle: movie.origin_name,
         description: movie.content || `${movie.name} - Một bộ phim hấp dẫn với nội dung đặc sắc và câu chuyện thú vị. Đây là một trong những bộ phim được yêu thích và theo dõi nhiều nhất hiện nay.`,
-        image: movie.poster_url || movie.thumb_url || 'https://images.unsplash.com/photo-1489844097929-c8d5b91c456e?w=1200&h=600&fit=crop',
+        image: movie.poster_url || movie.thumb_url || backgroundImages[imageIndex++ % backgroundImages.length],
         rating: 8.5,
         year: movie.year?.toString() || '2024',
         duration: '120 phút',
@@ -63,7 +74,7 @@ const Index = () => {
         title: movie.name || 'Phim bộ',
         subtitle: movie.origin_name,
         description: movie.content || `${movie.name} - Một bộ phim bộ hấp dẫn với nhiều tập phim thú vị. Theo dõi hành trình của các nhân vật qua từng tập phim đầy kịch tính.`,
-        image: movie.poster_url || movie.thumb_url || 'https://images.unsplash.com/photo-1489844097929-c8d5b91c456e?w=1200&h=600&fit=crop',
+        image: movie.poster_url || movie.thumb_url || backgroundImages[imageIndex++ % backgroundImages.length],
         rating: 8.7,
         year: movie.year?.toString() || '2024',
         duration: 'Nhiều tập',
@@ -80,7 +91,7 @@ const Index = () => {
         title: movie.name || 'Phim lẻ',
         subtitle: movie.origin_name,
         description: movie.content || `${movie.name} - Một bộ phim lẻ với câu chuyện hoàn chỉnh và hấp dẫn. Thưởng thức trọn vẹn câu chuyện trong một bộ phim duy nhất.`,
-        image: movie.poster_url || movie.thumb_url || 'https://images.unsplash.com/photo-1489844097929-c8d5b91c456e?w=1200&h=600&fit=crop',
+        image: movie.poster_url || movie.thumb_url || backgroundImages[imageIndex++ % backgroundImages.length],
         rating: 8.3,
         year: movie.year?.toString() || '2024',
         duration: '120 phút',
