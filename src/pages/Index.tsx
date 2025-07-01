@@ -3,6 +3,7 @@ import React from 'react';
 import Header from '@/components/shared/Header';
 import CategoryGrid from '@/components/shared/CategoryGrid';
 import MovieSection from '@/components/shared/MovieSection';
+import HeroCarousel from '@/components/shared/HeroCarousel';
 import { useNewMovies, useMovieList } from '@/hooks/useMovies';
 import { transformMovieToCardData } from '@/utils/movieUtils';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
@@ -11,7 +12,7 @@ const Index = () => {
   // Lấy phim mới cập nhật
   const { data: newMoviesData, loading: isLoadingNew, error: errorNew } = useNewMovies(1, 'v2');
   
-  // Lấy phim bộ mới nhất
+  // Lấy phím bộ mới nhất
   const { data: seriesData, loading: isLoadingSeries, error: errorSeries } = useMovieList({
     type_list: 'phim-bo',
     page: 1,
@@ -34,12 +35,26 @@ const Index = () => {
   const series = seriesData?.map(transformMovieToCardData) || [];
   const movies = moviesData?.map(transformMovieToCardData) || [];
 
+  // Tạo dữ liệu featured movies cho carousel
+  const featuredMovies = newMoviesData?.slice(0, 5)?.map(movie => ({
+    id: movie.slug || movie._id || '1',
+    title: movie.name || 'Phim hay',
+    subtitle: movie.origin_name,
+    description: movie.content || `${movie.name} - Một bộ phim hấp dẫn với cfabout đặc sắc và nội dung thú vị. Đây là một trong những bộ phim được yêu thích và theo dõi nhiều nhất hiện nại.`,
+    image: movie.poster_url || movie.thumb_url || 'https://images.unsplash.com/photo-1489844097929-c8d5b91c456e?w=1200&h=600&fit=crop',
+    rating: 8.5,
+    year: movie.year?.toString() || '2024',
+    duration: '120 phút',
+    genre: movie.category?.map(cat => cat.name) || ['Hành động'],
+    isNew: true
+  })) || [];
+
   return (
     <div className="min-h-screen bg-movie-bg">
       <Header />
       
-      {/* Hero Section */}
-      <HeroSection />
+      {/* Hero Carousel */}
+      {featuredMovies.length > 0 && <HeroCarousel movies={featuredMovies} />}
 
       {/* Category Grid với lazy loading */}
       <LazySection>
@@ -91,40 +106,6 @@ const Index = () => {
 
       <div className="h-20" />
     </div>
-  );
-};
-
-// Component Hero Section riêng
-const HeroSection = () => {
-  return (
-    <section className="relative h-[60vh] bg-gradient-to-r from-movie-bg via-movie-bg/80 to-transparent">
-      <div 
-        className="absolute inset-0 bg-cover bg-center opacity-30"
-        style={{
-          backgroundImage: 'url(https://images.unsplash.com/photo-1489844097929-c8d5b91c456e?w=1200&h=600&fit=crop)'
-        }}
-      />
-      <div className="relative container mx-auto px-4 h-full flex items-center">
-        <div className="max-w-2xl animate-fade-in">
-          <h1 className="text-4xl md:text-6xl font-bold text-movie-text mb-4">
-            Khám phá thế giới
-            <span className="text-movie-accent"> điện ảnh</span>
-          </h1>
-          <p className="text-lg text-movie-muted mb-8 leading-relaxed">
-            Hàng ngàn bộ phim chất lượng cao, từ Hollywood đến châu Á. 
-            Trải nghiệm xem phim tuyệt vời với chất lượng 4K và âm thanh sống động.
-          </p>
-          <div className="flex space-x-4">
-            <button className="bg-movie-accent hover:bg-movie-accent/90 text-white px-8 py-3 rounded-lg font-semibold transition-colors">
-              Xem ngay
-            </button>
-            <button className="border border-movie-accent text-movie-accent hover:bg-movie-accent/10 px-8 py-3 rounded-lg font-semibold transition-colors">
-              Tìm hiểu thêm
-            </button>
-          </div>
-        </div>
-      </div>
-    </section>
   );
 };
 
