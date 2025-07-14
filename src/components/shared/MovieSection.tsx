@@ -4,23 +4,7 @@ import { ChevronRight } from 'lucide-react';
 import MovieCard from './MovieCard';
 import { Button } from '@/components/ui/button';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
-
-interface MovieSectionProps {
-  title: string;
-  subtitle?: string;
-  movies: Array<{
-    id: string;
-    title: string;
-    subtitle?: string;
-    image: string;
-    episode?: string;
-    rating?: number;
-    year?: string;
-    duration?: string;
-    genre?: string[];
-    isNew?: boolean;
-  }>;
-}
+import { MovieSectionProps } from '@/types/carousel';
 
 const MovieSection: React.FC<MovieSectionProps> = ({ title, subtitle, movies }) => {
   const { ref, hasIntersected } = useIntersectionObserver({
@@ -53,6 +37,7 @@ const MovieSection: React.FC<MovieSectionProps> = ({ title, subtitle, movies }) 
               title={movie.title}
               subtitle={movie.subtitle}
               image={movie.image}
+              backgroundImage={movie.backgroundImage}
               episode={movie.episode}
               rating={movie.rating}
               year={movie.year}

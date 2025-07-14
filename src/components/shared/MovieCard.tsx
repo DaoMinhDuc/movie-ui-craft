@@ -3,24 +3,13 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Play, Star, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-
-interface MovieCardProps {
-  title: string;
-  subtitle?: string;
-  image: string;
-  episode?: string;
-  rating?: number;
-  year?: string;
-  duration?: string;
-  genre?: string[];
-  isNew?: boolean;
-  id?: string;
-}
+import { MovieCardProps } from '@/types/carousel';
 
 const MovieCard: React.FC<MovieCardProps> = ({
   title,
   subtitle,
   image,
+  backgroundImage,
   episode,
   rating,
   year,
@@ -29,13 +18,15 @@ const MovieCard: React.FC<MovieCardProps> = ({
   isNew = false,
   id = '1'
 }) => {
+  // Use backgroundImage (thumb_url) if available, otherwise fallback to image (poster_url)
+  const displayImage = backgroundImage || image;
   return (
     <Link to={`/movie/${id}`}>
       <div className="group relative bg-movie-card rounded-xl overflow-hidden hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl cursor-pointer">
         {/* Image Container */}
         <div className="relative aspect-[16/9] overflow-hidden">
           <img 
-            src={image} 
+            src={displayImage} 
             alt={title}
             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
           />

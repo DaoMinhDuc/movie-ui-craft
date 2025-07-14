@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -13,11 +12,11 @@ const LazyImage: React.FC<LazyImageProps> = ({
   src, 
   alt, 
   className,
-  placeholder = 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=400&h=225&fit=crop'
+  placeholder = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNjAwIiBoZWlnaHQ9IjkwMCIgdmlld0JveD0iMCAwIDE2MDAgOTAwIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjMTExMTExIi8+PC9zdmc+'
 }) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isInView, setIsInView] = useState(false);
-  const imgRef = useRef<HTMLImageElement>(null);
+  const imgRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -27,7 +26,7 @@ const LazyImage: React.FC<LazyImageProps> = ({
           observer.disconnect();
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.01 }
     );
 
     if (imgRef.current) {
@@ -38,10 +37,10 @@ const LazyImage: React.FC<LazyImageProps> = ({
   }, []);
 
   return (
-    <div ref={imgRef} className={cn("relative overflow-hidden", className)}>
+    <div ref={imgRef} className={cn("relative w-full h-full", className)}>
       {!isLoaded && (
-        <div className="absolute inset-0 bg-gray-800 animate-pulse flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-movie-accent border-t-transparent rounded-full animate-spin"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-gray-800 flex items-center justify-center">
+          <div className="w-10 h-10 border-4 border-movie-accent border-t-transparent rounded-full animate-spin"></div>
         </div>
       )}
       {isInView && (
@@ -49,7 +48,7 @@ const LazyImage: React.FC<LazyImageProps> = ({
           src={src}
           alt={alt}
           className={cn(
-            "w-full h-full object-cover transition-opacity duration-300",
+            "absolute inset-0 w-full h-full object-cover transition-opacity duration-500",
             isLoaded ? "opacity-100" : "opacity-0"
           )}
           onLoad={() => setIsLoaded(true)}

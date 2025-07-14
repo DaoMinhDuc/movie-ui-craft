@@ -3,16 +3,48 @@ import Header from '@/components/shared/Header';
 import CategoryGrid from '@/components/shared/CategoryGrid';
 import MovieSection from '@/components/shared/MovieSection';
 import HeroCarousel from '@/components/shared/HeroCarousel';
-import { useNewMovies, useMovieList } from '@/hooks/useMovies';
+import { useNewMoviesQuery, useMovieListQuery } from '@/hooks';
 import { transformMovieToCardData, getMovieImageUrl } from '@/utils/movieUtils';
 import { useIntersectionObserver } from '@/hooks/useIntersectionObserver';
+import { Loader2 } from 'lucide-react';
+import { FeaturedMovie, CarouselItem } from '@/types/carousel';
+import { Movie } from '@/types/movie';
 
 const Index = () => {
   // Lấy phim mới cập nhật
-  const { data: newMoviesData, loading: isLoadingNew, error: errorNew } = useNewMovies(1, 'v2');
+  const { 
+    data: newMoviesResponse, 
+    isLoading: isLoadingNew, 
+    error: errorNew,
+    isError: isErrorNew,
+    refetch: refetchNewMovies
+  } = useNewMoviesQuery(1, 'v2');
+  
+  // Try different API versions based on fallbacks
+  const [apiVersion, setApiVersion] = React.useState<'v1' | 'v2' | 'v3'>('v2');
+  
+  // If current version fails, try a different version
+  React.useEffect(() => {
+    if (isErrorNew || (newMoviesResponse && (!newMoviesResponse.data || !newMoviesResponse.data.items || newMoviesResponse.data.items.length === 0))) {
+      // Switch from v2 to v1, or v1 to v3
+      setApiVersion(apiVersion === 'v2' ? 'v1' : apiVersion === 'v1' ? 'v3' : 'v2');
+    }
+  }, [isErrorNew, newMoviesResponse, apiVersion]);
+  
+  // Use the current API version for the query
+  const { 
+    data: fallbackNewMovies, 
+    isLoading: isLoadingFallback 
+  } = useNewMoviesQuery(1, apiVersion);
+  
+  // Use fallback mechanism to handle different API versions
   
   // Lấy phím bộ mới nhất
-  const { data: seriesData, loading: isLoadingSeries, error: errorSeries } = useMovieList({
+  const { 
+    data: seriesResponse, 
+    isLoading: isLoadingSeries, 
+    error: errorSeries 
+  } = useMovieListQuery({
     type_list: 'phim-bo',
     page: 1,
     limit: 8,
@@ -21,7 +53,11 @@ const Index = () => {
   });
 
   // Lấy phim lẻ mới nhất
-  const { data: moviesData, loading: isLoadingMovies, error: errorMovies } = useMovieList({
+  const { 
+    data: moviesResponse, 
+    isLoading: isLoadingMovies, 
+    error: errorMovies 
+  } = useMovieListQuery({
     type_list: 'phim-le',
     page: 1,
     limit: 8,
@@ -29,14 +65,72 @@ const Index = () => {
     sort_type: 'desc'
   });
 
+  // Extract movie data from responses with fallbacks for different API structures
+  let newMoviesData: Movie[] = [];
+  
+  // First try with the primary data source
+  if (newMoviesResponse) {
+    if (newMoviesResponse.data?.items) {
+      // Standard structure
+      newMoviesData = newMoviesResponse.data.items;
+    } else if (Array.isArray(newMoviesResponse.data)) {
+      // Alternative structure: data is an array directly
+      newMoviesData = newMoviesResponse.data;
+    } else if (typeof newMoviesResponse === 'object' && 'items' in newMoviesResponse) {
+      // Another alternative: items at the top level
+      newMoviesData = (newMoviesResponse as unknown as { items: Movie[] }).items;
+    } else if (Array.isArray(newMoviesResponse)) {
+      // Direct array response
+      newMoviesData = newMoviesResponse as unknown as Movie[];
+    }
+  }
+  
+  // If primary data is empty or has error, try with fallback data
+  if ((isErrorNew || newMoviesData.length === 0) && fallbackNewMovies) {
+    if (fallbackNewMovies.data?.items) {
+      newMoviesData = fallbackNewMovies.data.items;
+    } else if (Array.isArray(fallbackNewMovies.data)) {
+      newMoviesData = fallbackNewMovies.data;
+    } else if (typeof fallbackNewMovies === 'object' && 'items' in fallbackNewMovies) {
+      newMoviesData = (fallbackNewMovies as unknown as { items: Movie[] }).items;
+    } else if (Array.isArray(fallbackNewMovies)) {
+      newMoviesData = fallbackNewMovies as unknown as Movie[];
+    }
+  }
+  
+  const seriesData = seriesResponse?.data?.items || [];
+  const moviesData = moviesResponse?.data?.items || [];
+
   // Transform dữ liệu cho UI
-  const newMovies = newMoviesData?.slice(0, 8)?.map(transformMovieToCardData) || [];
-  const series = seriesData?.map(transformMovieToCardData) || [];
-  const movies = moviesData?.map(transformMovieToCardData) || [];
+  const newMovies = newMoviesData?.slice(0, 8)?.map(movie => {
+    try {
+      return transformMovieToCardData(movie);
+    } catch (error) {
+      return null;
+    }
+  }).filter(Boolean) || [];
+  const series = seriesData?.map(movie => transformMovieToCardData(movie)).filter(Boolean) || [];
+  const movies = moviesData?.map(movie => transformMovieToCardData(movie)).filter(Boolean) || [];
 
   // Tạo dữ liệu featured movies cho carousel từ tất cả các loại phim
-  const createFeaturedMovies = () => {
-    const featuredList = [];
+  const createFeaturedMovies = (): FeaturedMovie[] => {
+    const featuredList: FeaturedMovie[] = [];
+    
+    // Convert CarouselItem to FeaturedMovie
+    const convertToFeaturedMovie = (item: CarouselItem): FeaturedMovie => {
+      return {
+        _id: item.id,
+        name: item.title,
+        origin_name: item.subtitle,
+        content: item.description,
+        thumb_url: item.backgroundImage,
+        poster_url: item.image,
+        rating: item.rating,
+        year: parseInt(item.year) || new Date().getFullYear(),
+        time: item.duration,
+        category: item.genre.map(name => ({ id: name, name, slug: name.toLowerCase() })),
+      };
+    };
     
     // Lấy 2 phim từ phim mới cập nhật
     if (newMoviesData && newMoviesData.length > 0) {
@@ -45,14 +139,19 @@ const Index = () => {
         title: movie.name || 'Phim hay',
         subtitle: movie.origin_name,
         description: movie.content || `${movie.name} - Một bộ phim hấp dẫn với nội dung đặc sắc và câu chuyện thú vị. Đây là một trong những bộ phim được yêu thích và theo dõi nhiều nhất hiện nay.`,
-        image: getMovieImageUrl(movie),
+        image: getMovieImageUrl(movie, false), // Use poster_url for main image
+        backgroundImage: getMovieImageUrl(movie, true), // Use thumb_url for background
         rating: 8.5,
         year: movie.year?.toString() || '2024',
         duration: '120 phút',
         genre: movie.category?.map(cat => cat.name) || ['Hành động'],
         isNew: true
       }));
-      featuredList.push(...newMoviesFeatured);
+      
+      // Convert to FeaturedMovie type before adding to the list
+      newMoviesFeatured.forEach(item => {
+        featuredList.push(convertToFeaturedMovie(item));
+      });
     }
 
     // Lấy 2 phim từ phim bộ mới nhất
@@ -62,14 +161,19 @@ const Index = () => {
         title: movie.name || 'Phim bộ',
         subtitle: movie.origin_name,
         description: movie.content || `${movie.name} - Một bộ phim bộ hấp dẫn với nhiều tập phim thú vị. Theo dõi hành trình của các nhân vật qua từng tập phim đầy kịch tính.`,
-        image: getMovieImageUrl(movie),
+        image: getMovieImageUrl(movie, false), // Use poster_url for main image
+        backgroundImage: getMovieImageUrl(movie, true), // Use thumb_url for background
         rating: 8.7,
         year: movie.year?.toString() || '2024',
         duration: 'Nhiều tập',
         genre: movie.category?.map(cat => cat.name) || ['Phim bộ'],
         isNew: false
       }));
-      featuredList.push(...seriesFeatured);
+      
+      // Convert to FeaturedMovie type before adding to the list
+      seriesFeatured.forEach(item => {
+        featuredList.push(convertToFeaturedMovie(item));
+      });
     }
 
     // Lấy 1 phim từ phim lẻ mới nhất
@@ -79,20 +183,35 @@ const Index = () => {
         title: movie.name || 'Phim lẻ',
         subtitle: movie.origin_name,
         description: movie.content || `${movie.name} - Một bộ phim lẻ với câu chuyện hoàn chỉnh và hấp dẫn. Thưởng thức trọn vẹn câu chuyện trong một bộ phim duy nhất.`,
-        image: getMovieImageUrl(movie),
+        image: getMovieImageUrl(movie, false), // Use poster_url for main image
+        backgroundImage: getMovieImageUrl(movie, true), // Use thumb_url for background
         rating: 8.3,
         year: movie.year?.toString() || '2024',
         duration: '120 phút',
         genre: movie.category?.map(cat => cat.name) || ['Phim lẻ'],
         isNew: false
       }));
-      featuredList.push(...moviesFeatured);
+      
+      // Convert to FeaturedMovie type before adding to the list
+      moviesFeatured.forEach(item => {
+        featuredList.push(convertToFeaturedMovie(item));
+      });
     }
 
     return featuredList;
   };
 
   const featuredMovies = createFeaturedMovies();
+
+  // Loading state
+  const isLoading = (isLoadingNew && isLoadingFallback) || isLoadingSeries || isLoadingMovies;
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-movie-bg flex items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-movie-bg">
@@ -107,10 +226,10 @@ const Index = () => {
       </LazySection>
 
       {/* Movie Sections với lazy loading */}
-      {isLoadingNew ? (
+      {isLoadingNew && isLoadingFallback ? (
         <LoadingSection title="Đang tải phim mới..." />
-      ) : errorNew ? (
-        <ErrorSection error={errorNew.message} />
+      ) : (isErrorNew && newMovies.length === 0) ? (
+        <ErrorSection error={`Lỗi khi tải phim mới: ${errorNew?.message || 'Không thể tải dữ liệu'}`} />
       ) : newMovies.length > 0 ? (
         <MovieSection 
           title="Phim mới cập nhật"

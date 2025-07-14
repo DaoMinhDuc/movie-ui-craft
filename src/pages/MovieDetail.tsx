@@ -1,33 +1,41 @@
 
-import React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Play, Star, Calendar, Clock, Users, Globe, Heart, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Header from '@/components/shared/Header';
 import MovieSection from '@/components/shared/MovieSection';
-import { useMovieDetail, useMovieList } from '@/hooks/useMovies';
+import { useMovieDetailQuery, useMovieListQuery } from '@/hooks/queries/useMovies';
 import { transformMovieToCardData, getMovieImageUrl } from '@/utils/movieUtils';
 
 const MovieDetail = () => {
   const { id } = useParams();
-  const { data: movieData, loading, error } = useMovieDetail(id || '');
+  const { data: movieData, isLoading, error } = useMovieDetailQuery(id || '');
   
   // Lấy movie và episodes từ response
   const movie = movieData?.movie;
-  const episodes = movieData?.episodes || [];
+  const episodes = useMemo(() => movieData?.episodes || [], [movieData?.episodes]);
+
+  const [selectedServer, setSelectedServer] = useState<string>('');
+
+  useEffect(() => {
+    if (episodes && episodes.length > 0) {
+      setSelectedServer(episodes[0].server_name);
+    }
+  }, [episodes]);
   
   // Lấy phim liên quan (cùng thể loại)
-  const { data: relatedMovies } = useMovieList({
+  const { data: relatedMovies } = useMovieListQuery({
     type_list: 'phim-bo',
     category: movie?.category?.[0]?.slug || '',
     page: 1,
     limit: 4
   });
 
-  const relatedMoviesData = relatedMovies?.map(transformMovieToCardData) || [];
+  const relatedMoviesData = relatedMovies?.data?.items?.map(transformMovieToCardData) || [];
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-movie-bg">
         <Header />
@@ -212,22 +220,44 @@ const MovieDetail = () => {
       {episodes && episodes.length > 0 && (
         <section className="container mx-auto px-4 py-12">
           <h2 className="text-2xl font-bold text-movie-text mb-6">Danh sách tập phim</h2>
-          {episodes.map((server, serverIndex) => (
-            <div key={serverIndex} className="mb-8">
-              <h3 className="text-lg font-semibold text-movie-text mb-4">{server.server_name}</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
-                {server.server_data?.map((episode, episodeIndex) => (
+          
+          {/* Server Selection Buttons */}
+          <div className="mb-6">
+            <div className="flex flex-wrap gap-2">
+              {episodes.map((server, idx) => (
+                <Button
+                  key={idx}
+                  variant={selectedServer === server.server_name ? "default" : "outline"}
+                  onClick={() => setSelectedServer(server.server_name)}
+                  className={
+                    selectedServer === server.server_name 
+                      ? "bg-movie-accent hover:bg-movie-accent/90" 
+                      : "border-movie-muted text-movie-muted hover:text-movie-accent hover:border-movie-accent"
+                  }
+                >
+                  {server.server_name}
+                </Button>
+              ))}
+            </div>
+          </div>
+          
+          {/* Episode Grid for Selected Server */}
+          {episodes.find(server => server.server_name === selectedServer) && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+              {episodes
+                .find(server => server.server_name === selectedServer)
+                ?.server_data?.map((episode, episodeIdx) => (
                   <Link 
-                    key={episodeIndex}
+                    key={episodeIdx}
                     to={`/watch/${movie.slug}/${episode.slug}`}
                     className="bg-movie-card rounded-lg p-4 text-center hover:bg-movie-accent transition-colors"
                   >
                     <span className="text-white font-medium">{episode.name}</span>
                   </Link>
-                ))}
-              </div>
+                ))
+              }
             </div>
-          ))}
+          )}
         </section>
       )}
 

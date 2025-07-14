@@ -1,12 +1,7 @@
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
-
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  avatar?: string;
-}
+import React, { createContext, useContext } from 'react';
+import { useCurrentUser, useLogin, useLogout, useRegister } from '@/hooks/queries/useAuth';
+import type { User } from '@/services/authApi';
 
 interface AuthContextType {
   user: User | null;
@@ -27,64 +22,36 @@ export const useAuth = () => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  // Use React Query hooks
+  const { data: user, isLoading: isLoadingUser } = useCurrentUser();
+  const { mutateAsync: loginMutation, isPending: isLoadingLogin } = useLogin();
+  const { mutateAsync: registerMutation, isPending: isLoadingRegister } = useRegister();
+  const { mutateAsync: logoutMutation, isPending: isLoadingLogout } = useLogout();
 
-  useEffect(() => {
-    // Check if user is logged in from localStorage
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-  }, []);
+  // Determine overall loading state
+  const isLoading = isLoadingUser || isLoadingLogin || isLoadingRegister || isLoadingLogout;
 
+  // Login function
   const login = async (email: string, password: string) => {
-    setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const mockUser: User = {
-        id: '1',
-        name: 'Nguyễn Văn A',
-        email: email,
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face'
-      };
-      
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      await loginMutation({ email, password });
     } catch (error) {
       throw new Error('Đăng nhập thất bại');
-    } finally {
-      setIsLoading(false);
     }
   };
 
+  // Register function
   const register = async (name: string, email: string, password: string) => {
-    setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const mockUser: User = {
-        id: '1',
-        name: name,
-        email: email,
-        avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=32&h=32&fit=crop&crop=face'
-      };
-      
-      setUser(mockUser);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      await registerMutation({ name, email, password });
     } catch (error) {
       throw new Error('Đăng ký thất bại');
-    } finally {
-      setIsLoading(false);
     }
   };
 
+  // Logout function
   const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
+    logoutMutation();
   };
 
   return (

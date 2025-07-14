@@ -32,8 +32,8 @@ export interface Movie {
   content: string;
   type: string;
   status: string;
-  poster_url: string;
-  thumb_url: string;
+  thumb_url: string;  // Used for background/thumbnail images
+  poster_url: string;  // Used for main poster images
   is_copyright: boolean;
   sub_docquyen: boolean;
   chieurap: boolean;
@@ -112,3 +112,8 @@ export interface SearchParams {
 export interface MovieListParams extends Omit<SearchParams, 'keyword'> {
   type_list: 'phim-bo' | 'phim-le' | 'tv-shows' | 'hoat-hinh' | 'phim-vietsub' | 'phim-thuyet-minh' | 'phim-long-tieng';
 }
+
+// Type aliases for specific endpoint parameters
+export type CategoryParams = Omit<SearchParams, 'keyword' | 'category'>;
+export type CountryParams = Omit<SearchParams, 'keyword' | 'country'>;
+export type YearParams = Omit<SearchParams, 'keyword' | 'year'>;
