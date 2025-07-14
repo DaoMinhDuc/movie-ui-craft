@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Header from '@/components/shared/Header';
 import MovieCard from '@/components/shared/MovieCard';
-import { useMovieList, useCategories } from '@/hooks/useMovies';
+
 import { transformMovieToCardData } from '@/utils/movieUtils';
+import { useMovieListQuery, useCategoriesQuery } from '@/hooks';
 
 const CategoryPage = () => {
   const { category } = useParams();
@@ -17,8 +18,8 @@ const CategoryPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   // Get movies for this category
-  const { data: moviesData, loading } = useMovieList({
-    type_list: category as any || 'phim-bo',
+  const { data: moviesData, isLoading } = useMovieListQuery({
+    type_list: (category as "phim-bo" | "phim-le" | "tv-shows" | "hoat-hinh" | "phim-vietsub" | "phim-thuyet-minh" | "phim-long-tieng") || 'phim-bo',
     page: currentPage,
     limit: 20,
     sort_field: 'modified.time',
@@ -26,7 +27,7 @@ const CategoryPage = () => {
   });
 
   // Get categories for filter
-  const { data: categories } = useCategories();
+  const { data: categories } = useCategoriesQuery();
 
   const categoryTitles: { [key: string]: string } = {
     'phim-bo': 'Phim Bộ',
@@ -43,7 +44,7 @@ const CategoryPage = () => {
     description: `Tổng hợp ${categoryTitles[category || '']?.toLowerCase() || 'phim'} hay nhất`
   };
 
-  const transformedMovies = moviesData?.map(transformMovieToCardData) || [];
+  const transformedMovies = moviesData?.data?.items?.map(transformMovieToCardData) || [];
 
   return (
     <div className="min-h-screen bg-movie-bg">
@@ -105,7 +106,7 @@ const CategoryPage = () => {
         </div>
 
         {/* Movies Grid */}
-        {loading ? (
+        {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="bg-movie-card animate-pulse rounded-lg h-80"></div>

@@ -6,14 +6,14 @@ import MovieCard from '@/components/shared/MovieCard';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useSearchMovies } from '@/hooks/useMovies';
+import { useSearchMoviesQuery } from '@/hooks/queries/useMovies';
 import { transformMovieToCardData } from '@/utils/movieUtils';
 
 const SearchPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
 
-  const { data: searchResults, loading: isLoading } = useSearchMovies({
+  const { data: searchResults, isLoading } = useSearchMoviesQuery({
     keyword: searchQuery,
     page: 1,
     limit: 20
@@ -38,7 +38,7 @@ const SearchPage = () => {
     }
   };
 
-  const transformedResults = searchResults.map(transformMovieToCardData);
+  const transformedResults = searchResults?.data?.items?.map(transformMovieToCardData) || [];
 
   return (
     <div className="min-h-screen bg-movie-bg">

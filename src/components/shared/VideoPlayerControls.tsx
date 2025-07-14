@@ -9,7 +9,9 @@ import {
   Maximize, 
   Minimize,
   SkipBack,
-  SkipForward
+  SkipForward,
+  Rewind,
+  FastForward
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -97,7 +99,14 @@ const VideoPlayerControls: React.FC<VideoPlayerControlsProps> = ({
           <Button
             variant="ghost"
             size="icon"
-            onClick={isPlaying ? onPause : onPlay}
+            onClick={(e) => {
+              e.preventDefault();
+              if (isPlaying) {
+                onPause();
+              } else {
+                onPlay();
+              }
+            }}
             className="text-white hover:bg-white/20"
           >
             {isPlaying ? (
@@ -107,35 +116,45 @@ const VideoPlayerControls: React.FC<VideoPlayerControlsProps> = ({
             )}
           </Button>
 
-          {/* Skip buttons */}
-          {onSkipBackward && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onSkipBackward}
-              className="text-white hover:bg-white/20"
-            >
-              <SkipBack className="h-5 w-5" />
-            </Button>
-          )}
+          {/* Skip backward button - always visible */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.preventDefault();
+              if (onSkipBackward) onSkipBackward();
+            }}
+            className="text-white hover:bg-white/20"
+            title="Lùi 10 giây"
+            disabled={!onSkipBackward}
+          >
+            <Rewind className="h-5 w-5" />
+          </Button>
 
-          {onSkipForward && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onSkipForward}
-              className="text-white hover:bg-white/20"
-            >
-              <SkipForward className="h-5 w-5" />
-            </Button>
-          )}
+          {/* Skip forward button - always visible */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={(e) => {
+              e.preventDefault();
+              if (onSkipForward) onSkipForward();
+            }}
+            className="text-white hover:bg-white/20"
+            title="Tua 10 giây"
+            disabled={!onSkipForward}
+          >
+            <FastForward className="h-5 w-5" />
+          </Button>
 
           {/* Volume */}
           <div className="flex items-center space-x-2">
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => onVolumeChange(volume > 0 ? 0 : 1)}
+              onClick={(e) => {
+                e.preventDefault();
+                onVolumeChange(volume > 0 ? 0 : 1);
+              }}
               className="text-white hover:bg-white/20"
             >
               {volume === 0 ? (
@@ -160,7 +179,10 @@ const VideoPlayerControls: React.FC<VideoPlayerControlsProps> = ({
         <Button
           variant="ghost"
           size="icon"
-          onClick={onToggleFullscreen}
+          onClick={(e) => {
+            e.preventDefault();
+            onToggleFullscreen();
+          }}
           className="text-white hover:bg-white/20"
         >
           {isFullscreen ? (

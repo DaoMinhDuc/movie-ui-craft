@@ -4,6 +4,8 @@ import VideoPlayerControls from './VideoPlayerControls';
 import { useVideoPlayer } from '@/hooks/useVideoPlayer';
 import { VideoPlayerProps, VideoPlayerRef } from '@/types/video';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Rewind, FastForward } from 'lucide-react';
 
 interface VideoPlayerWithControlsProps extends Omit<VideoPlayerProps, 'controls'> {
   showCustomControls?: boolean;
@@ -29,8 +31,12 @@ const VideoPlayerWithControls: React.FC<VideoPlayerWithControlsProps> = ({
   onSkipForward,
 }) => {
   const videoRef = useRef<VideoPlayerRef>(null);
+  const playerContainerRef = useRef<HTMLDivElement>(null);
   const [showControls, setShowControls] = useState(false);
   const [controlsTimeout, setControlsTimeout] = useState<NodeJS.Timeout | null>(null);
+  const isMobile = useIsMobile();
+  const [showSkipBackwardAnimation, setShowSkipBackwardAnimation] = useState(false);
+  const [showSkipForwardAnimation, setShowSkipForwardAnimation] = useState(false);
 
   const {
     isPlaying,
@@ -81,13 +87,23 @@ const VideoPlayerWithControls: React.FC<VideoPlayerWithControlsProps> = ({
   const handleSkipBackward = () => {
     const newTime = Math.max(0, currentTime - 10);
     seek(newTime);
-    onSkipBackward?.();
+    
+    // Hiện hoạt ảnh phản hồi trên di động
+    if (isMobile) {
+      setShowSkipBackwardAnimation(true);
+      setTimeout(() => setShowSkipBackwardAnimation(false), 800);
+    }
   };
 
   const handleSkipForward = () => {
     const newTime = Math.min(duration, currentTime + 10);
     seek(newTime);
-    onSkipForward?.();
+    
+    // Hiện hoạt ảnh phản hồi trên di động
+    if (isMobile) {
+      setShowSkipForwardAnimation(true);
+      setTimeout(() => setShowSkipForwardAnimation(false), 800);
+    }
   };
 
   React.useEffect(() => {
@@ -98,12 +114,43 @@ const VideoPlayerWithControls: React.FC<VideoPlayerWithControlsProps> = ({
     };
   }, [controlsTimeout]);
 
+  // Xử lý nhấp vào màn hình để tua nhanh/lùi trên thiết bị di động
+  const handleScreenTap = (event: React.MouseEvent<HTMLDivElement>) => {
+    // Ngăn chặn hành vi mặc định của sự kiện click
+    event.preventDefault();
+    
+    if (!isMobile || !playerContainerRef.current) return;
+    
+    const containerWidth = playerContainerRef.current.offsetWidth;
+    const clickX = event.nativeEvent.offsetX;
+    const clickPosition = clickX / containerWidth;
+    
+    // Nhấp vào 30% bên trái màn hình
+    if (clickPosition < 0.3) {
+      handleSkipBackward();
+    } 
+    // Nhấp vào 30% bên phải màn hình
+    else if (clickPosition > 0.7) {
+      handleSkipForward();
+    }
+    // Nhấp vào giữa màn hình (40% ở giữa) - chuyển đổi phát/tạm dừng
+    else {
+      if (isPlaying) {
+        handlePause();
+      } else {
+        handlePlay();
+      }
+    }
+  };
+
   return (
     <div 
+      ref={playerContainerRef}
       className={cn('relative group', className)}
       style={{ width, height }}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
+      onClick={handleScreenTap}
     >
       <VideoPlayer
         ref={videoRef}
@@ -120,6 +167,35 @@ const VideoPlayerWithControls: React.FC<VideoPlayerWithControlsProps> = ({
         onPause={onPause}
         onEnded={onEnded}
       />
+
+      {isMobile && (
+        <>
+          <div 
+            className={cn(
+              'absolute left-10 top-1/2 -translate-y-1/2 bg-black/60 rounded-full p-4 transition-opacity duration-300',
+              showSkipBackwardAnimation ? 'opacity-70' : 'opacity-0 pointer-events-none'
+            )}
+          >
+            <div className="flex flex-col items-center justify-center">
+              <Rewind className="h-8 w-8 text-white" />
+              <span className="text-white text-sm font-bold mt-1">-10s</span>
+            </div>
+          </div>
+          
+          {/* Skip forward animation */}
+          <div 
+            className={cn(
+              'absolute right-10 top-1/2 -translate-y-1/2 bg-black/60 rounded-full p-4 transition-opacity duration-300',
+              showSkipForwardAnimation ? 'opacity-70' : 'opacity-0 pointer-events-none'
+            )}
+          >
+            <div className="flex flex-col items-center justify-center">
+              <FastForward className="h-8 w-8 text-white" />
+              <span className="text-white text-sm font-bold mt-1">+10s</span>
+            </div>
+          </div>
+        </>
+      )}
 
       {showCustomControls && (
         <VideoPlayerControls
