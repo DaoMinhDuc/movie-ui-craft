@@ -1,9 +1,10 @@
 import React, { useRef, useEffect, forwardRef, useImperativeHandle, useState } from 'react';
-import Hls from 'hls.js';
+import videojs from 'video.js';
+import 'video.js/dist/video-js.css';
 import { VideoPlayerProps, VideoPlayerRef } from '@/types/video';
 import { cn } from '@/lib/utils';
 
-const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
+const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({ 
   src,
   poster,
   autoPlay = false,
@@ -19,16 +20,16 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
   onEnded,
 }, ref) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const hlsRef = useRef<Hls | null>(null);
+  const playerRef = useRef<typeof videojs.players | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Expose video methods through ref
   useImperativeHandle(ref, () => ({
     play: async () => {
-      if (videoRef.current) {
+      if (playerRef.current) {
         try {
-          await videoRef.current.play();
+          playerRef.current.play();
         } catch (err) {
           console.error('Error playing video:', err);
           throw err;
@@ -36,33 +37,29 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
       }
     },
     pause: () => {
-      if (videoRef.current) {
-        videoRef.current.pause();
-      }
+      playerRef.current?.pause();
     },
     getCurrentTime: () => {
-      return videoRef.current?.currentTime || 0;
+      return playerRef.current?.currentTime() || 0;
     },
     getDuration: () => {
-      return videoRef.current?.duration || 0;
+      return playerRef.current?.duration() || 0;
     },
     setCurrentTime: (time: number) => {
-      if (videoRef.current) {
-        videoRef.current.currentTime = time;
-      }
+      playerRef.current?.currentTime(time);
     },
     getVolume: () => {
-      return videoRef.current?.volume || 0;
+      return playerRef.current?.volume() || 0;
     },
     setVolume: (volume: number) => {
-      if (videoRef.current) {
-        videoRef.current.volume = Math.max(0, Math.min(1, volume));
+      if (playerRef.current) {
+        playerRef.current.volume(Math.max(0, Math.min(1, volume)));
       }
     },
     requestFullscreen: async () => {
-      if (videoRef.current && videoRef.current.requestFullscreen) {
+      if (playerRef.current) {
         try {
-          await videoRef.current.requestFullscreen();
+          playerRef.current.requestFullscreen();
         } catch (err) {
           console.error('Error entering fullscreen:', err);
           throw err;
@@ -71,154 +68,76 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
     },
   }));
 
-  // Initialize HLS player
   useEffect(() => {
     if (!src || !videoRef.current) return;
 
-    const video = videoRef.current;
     setIsLoading(true);
     setError(null);
 
-    // Clean up previous HLS instance
-    if (hlsRef.current) {
-      hlsRef.current.destroy();
-      hlsRef.current = null;
+    // Clean up previous player
+    if (playerRef.current) {
+      playerRef.current.dispose();
+      playerRef.current = null;
     }
 
-    // Check if browser supports HLS natively (Safari)
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
-      video.src = src;
+    // Khởi tạo Video.js
+    const player = videojs(videoRef.current, {
+      sources: [
+        {
+          src,
+          type: 'application/x-mpegURL',
+        },
+      ],
+      poster,
+      controls,
+      autoplay: autoPlay,
+      preload: 'metadata',
+      fluid: false,
+      width: typeof width === 'number' ? width : undefined,
+      height: typeof height === 'number' ? height : undefined,
+    });
+    playerRef.current = player;
+
+    // Sự kiện loading
+    player.on('loadstart', () => {
+      setIsLoading(true);
+      onLoadStart?.();
+    });
+    player.on('loadeddata', () => {
       setIsLoading(false);
-      return;
-    }
-
-    // Use HLS.js for other browsers
-    if (Hls.isSupported()) {
-      const hls = new Hls({
-        enableWorker: true,
-        lowLatencyMode: false,
-        backBufferLength: 90,
-        maxBufferLength: 30,
-        maxMaxBufferLength: 600,
-        maxBufferSize: 60 * 1000 * 1000,
-        maxBufferHole: 0.5,
-        highBufferWatchdogPeriod: 2,
-        nudgeOffset: 0.1,
-        nudgeMaxRetry: 3,
-        maxFragLookUpTolerance: 0.25,
-        liveSyncDurationCount: 3,
-        liveMaxLatencyDurationCount: Infinity,
-        liveDurationInfinity: false,
-        enableSoftwareAES: true,
-        manifestLoadingTimeOut: 10000,
-        manifestLoadingMaxRetry: 1,
-        manifestLoadingRetryDelay: 1000,
-        levelLoadingTimeOut: 10000,
-        levelLoadingMaxRetry: 4,
-        levelLoadingRetryDelay: 1000,
-        fragLoadingTimeOut: 20000,
-        fragLoadingMaxRetry: 6,
-        fragLoadingRetryDelay: 1000,
-      });
-
-      hlsRef.current = hls;
-
-      // Event listeners
-      hls.on(Hls.Events.MEDIA_ATTACHED, () => {
-        console.log('Video attached to HLS');
-      });
-
-      hls.on(Hls.Events.MANIFEST_PARSED, () => {
-        console.log('Manifest parsed, levels:', hls.levels);
-        setIsLoading(false);
-        if (autoPlay && video) {
-          video.play().catch(err => {
-            console.error('Auto-play failed:', err);
-          });
-        }
-      });
-
-      hls.on(Hls.Events.ERROR, (event, data) => {
-        console.error('HLS Error:', data);
-        
-        if (data.fatal) {
-          switch (data.type) {
-            case Hls.ErrorTypes.NETWORK_ERROR:
-              console.log('Fatal network error encountered, try to recover');
-              hls.startLoad();
-              break;
-            case Hls.ErrorTypes.MEDIA_ERROR:
-              console.log('Fatal media error encountered, try to recover');
-              hls.recoverMediaError();
-              break;
-            default:
-              console.log('Fatal error, cannot recover');
-              setError('Không thể phát video. Vui lòng thử lại sau.');
-              if (onError) {
-                onError(new Error(data.reason || 'HLS playback error'));
-              }
-              hls.destroy();
-              break;
-          }
-        }
-      });
-
-      hls.on(Hls.Events.LEVEL_SWITCHED, (event, data) => {
-        console.log('Level switched to:', data.level);
-      });
-
-      // Load the video
-      hls.loadSource(src);
-      hls.attachMedia(video);
-    } else {
-      setError('Trình duyệt không hỗ trợ phát video HLS');
-      if (onError) {
-        onError(new Error('HLS not supported'));
-      }
-    }
-
-    return () => {
-      if (hlsRef.current) {
-        hlsRef.current.destroy();
-        hlsRef.current = null;
-      }
-    };
-  }, [src, autoPlay, onError]);
-
-  // Video event handlers
-  const handleLoadStart = () => {
-    setIsLoading(true);
-    onLoadStart?.();
-  };
-
-  const handleLoadedData = () => {
-    setIsLoading(false);
-    onLoadedData?.();
-  };
-
-  const handleError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
-    const videoError = (e.target as HTMLVideoElement).error;
-    if (videoError) {
-      const errorMessage = `Video error: ${videoError.message || 'Unknown error'}`;
+      onLoadedData?.();
+    });
+    player.on('error', () => {
+      const vjsError = player.error();
+      const errorMessage = vjsError?.message || 'Không thể phát video. Vui lòng thử lại sau.';
       setError(errorMessage);
-      console.error('Video element error:', videoError);
       if (onError) {
         onError(new Error(errorMessage));
       }
-    }
-  };
+    });
+    player.on('play', () => {
+      onPlay?.();
+    });
+    player.on('pause', () => {
+      onPause?.();
+    });
+    player.on('ended', () => {
+      onEnded?.();
+    });
 
-  const handlePlay = () => {
-    onPlay?.();
-  };
+    player.ready(() => {
+      if (player.readyState() >= 2) {
+        setIsLoading(false);
+      }
+    });
 
-  const handlePause = () => {
-    onPause?.();
-  };
-
-  const handleEnded = () => {
-    onEnded?.();
-  };
+    return () => {
+      if (playerRef.current) {
+        playerRef.current.dispose();
+        playerRef.current = null;
+      }
+    };
+  }, [src, autoPlay, controls, poster, width, height, onError, onLoadStart, onLoadedData, onPlay, onPause, onEnded]);
 
   return (
     <div className={cn('relative', className)} style={{ width, height }}>
@@ -242,20 +161,12 @@ const VideoPlayer = forwardRef<VideoPlayerRef, VideoPlayerProps>(({
         </div>
       )}
 
-      {/* Video element */}
+      {/* Video.js element */}
       <video
         ref={videoRef}
-        className="w-full h-full"
+        className="video-js vjs-default-skin w-full h-full"
         poster={poster}
-        controls={controls}
         playsInline
-        preload="metadata"
-        onLoadStart={handleLoadStart}
-        onLoadedData={handleLoadedData}
-        onError={handleError}
-        onPlay={handlePlay}
-        onPause={handlePause}
-        onEnded={handleEnded}
         style={{ width, height }}
       >
         Trình duyệt của bạn không hỗ trợ video HTML5.
